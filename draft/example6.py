@@ -191,7 +191,6 @@ class Matching:
                         micropythonだとeval関数の引数はローカル変数をとらない?
                         ドキュメント参照
                         """
-                        print(dict2)
                         print('false')
                         break
 
