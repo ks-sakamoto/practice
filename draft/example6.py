@@ -12,8 +12,7 @@ class Extract:
         with open(self.file, encoding='utf-8') as f:
             data = f.read().replace('\n', '')
             regex = re.compile('\(property\s*(\(.*?\))\s*\)')
-            mm = regex.search(data)
-            text = mm.group(1)
+            text = regex.search(data).group(1)
             regex2 = re.compile('\(.*?\)')
             while True:
                 pro_exist = regex2.search(text)
@@ -24,8 +23,7 @@ class Extract:
                     break
 
             regex = re.compile('\(initial_facts\s*(\(.*?\))\s*\)')
-            mm = regex.search(data)
-            text = mm.group(1)
+            text = regex.search(data).group(1)
             while True:
                 ini_exist = regex2.search(text)
                 if ini_exist is not None:
@@ -116,14 +114,14 @@ class Matching:
                     # ?部分の抽出
                     while True:
                         regex = re.compile('\?\w+')
-                        mm = regex.search(s)
+                        var_exist = regex.search(s)
 
                         # ?が存在したら
-                        if mm is not None:
+                        if var_exist is not None:
                             # ?の手前の:○○を抽出
                             val = re.search(':\w+\s+\?\w+', s).group(0)
                             # 辞書に仮置き(dict = {'?○○':':○○'})
-                            dict2[mm.group(0)] = re.search(
+                            dict2[var_exist.group(0)] = re.search(
                                 ':\w+', val).group(0)
                             # ?○○が除去
                             s = regex.sub('', s, 1)
@@ -148,6 +146,7 @@ class Matching:
                         for key, value in dict2.items():
                             mm = re.search(':\w+', value)
 
+                            # dict2に変数と値の組を代入
                             if mm is not None:
                                 regex = re.compile(
                                     '{0}{1}'.format(mm.group(0), '\s+[a-zA-Z0-9_-]+'))  # <- 変更箇所
@@ -162,7 +161,7 @@ class Matching:
                                         break
                                 else:
                                     """
-                                    breakしなかった場合（fact_iniに求める':\w+'が存在しなかった場合
+                                    breakしなかった場合（fact_iniの中に求める':\w+'が存在しなかった場合
                                     """
                                     for pro in self.fact_pro:
                                         mmm = re.search(mm.group(0), pro)
@@ -178,12 +177,11 @@ class Matching:
                 # 比較演算子が存在した場合
                 else:
                     regex = re.compile('\?\w+')
-                    mm = regex.search(s)
+                    var_exist = regex.search(s)
                     # ?が存在した場合
-                    if mm is not None:
-                        s = regex.sub(dict2[mm.group(0)], s)
-                    # ()の中味を抜き出す
-                    # スペースで区切る
+                    if var_exist is not None:
+                        s = regex.sub(dict2[var_exist.group(0)], s)
+                    # ()の中味を抜き出してスペースで区切る
                     s = re.sub('\(|\)', '', s)
                     t = s.split(' ')
                     if not eval('t[1]' + t[0] + 't[2]'):
