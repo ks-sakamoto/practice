@@ -16,7 +16,7 @@ class Extract:
             regex = re.compile('\(initial_facts\s*(\(.*?\))\s*\)')
             mm = regex.search(data)
             fact_ini = mm.group(1)
-            print(mm.group(0))
+
             # printではなくreturnさせてmainでprintさせるほうがいいっすね。byなかや
             '''
             print('property = ' + self.fact_pro)
