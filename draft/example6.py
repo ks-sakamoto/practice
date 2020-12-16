@@ -7,15 +7,32 @@ class Extract:
         self.file = file
 
     def fact(self):
+        fact_pro = []
+        fact_ini = []
         with open(self.file, encoding='utf-8') as f:
             data = f.read().replace('\n', '')
             regex = re.compile('\(property\s*(\(.*?\))\s*\)')
             mm = regex.search(data)
-            fact_pro = mm.group(1)
+            text = mm.group(1)
+            regex2 = re.compile('\(.*?\)')
+            while True:
+                pro_exist = regex2.search(text)
+                if pro_exist is not None:
+                    fact_pro.append(pro_exist.group(0))
+                    text = regex2.sub('', text, 1)
+                else:
+                    break
 
             regex = re.compile('\(initial_facts\s*(\(.*?\))\s*\)')
             mm = regex.search(data)
-            fact_ini = mm.group(1)
+            text = mm.group(1)
+            while True:
+                ini_exist = regex2.search(text)
+                if ini_exist is not None:
+                    fact_ini.append(ini_exist.group(0))
+                    text = regex2.sub('', text, 1)
+                else:
+                    break
 
             # printではなくreturnさせてmainでprintさせるほうがいいっすね。byなかや
             '''
