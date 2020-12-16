@@ -133,13 +133,13 @@ class Matching:
                     s = re.sub('\s+', '.*', s)
                     regex = re.compile(s)
                     # propertyとマッチング
-                    for i in self.fact_pro:
-                        m_pro = regex.search(i)
+                    for pro in self.fact_pro:
+                        m_pro = regex.search(pro)
                         if m_pro is not None:
                             break
                     # initial_factsとマッチング
-                    for i in self.fact_ini:
-                        m_ini = regex.search(i)
+                    for ini in self.fact_ini:
+                        m_ini = regex.search(ini)
                         if m_ini is not None:
                             break
 
@@ -149,19 +149,27 @@ class Matching:
                             mm = re.search(':\w+', value)
 
                             if mm is not None:
-                                mmm = re.search(mm.group(0), self.fact_ini)
                                 regex = re.compile(
-                                    '{0}{1}'.format(mm.group(0), '\s+[a-zA-Z0-9_\(\) -]+'))  # <- 変更箇所
+                                    '{0}{1}'.format(mm.group(0), '\s+[a-zA-Z0-9_-]+'))  # <- 変更箇所
                                 regex2 = re.compile(
                                     '{0}{1}'.format(mm.group(0), '\s+'))
-                                if mmm is not None:
-                                    h = regex.search(self.fact_ini).group(0)
-                                    h = regex2.sub('', h)
-                                    dict2[key] = h
+                                for ini in self.fact_ini:
+                                    mmm = re.search(mm.group(0), ini)
+                                    if mmm is not None:
+                                        h = regex.search(ini).group(0)
+                                        h = regex2.sub('', h)
+                                        dict2[key] = h
+                                        break
                                 else:
-                                    h = regex.search(self.fact_pro).group(0)
-                                    h = regex2.sub('', h)
-                                    dict2[key] = h
+                                    """
+                                    breakしなかった場合（fact_iniに求める':\w+'が存在しなかった場合
+                                    """
+                                    for pro in self.fact_pro:
+                                        mmm = re.search(mm.group(0), pro)
+                                        if mmm is not None:
+                                            h = regex.search(pro).group(0)
+                                            h = regex2.sub('', h)
+                                            dict2[key] = h
                     # ファクトとマッチしなかったとき
                     else:
                         print('false')
@@ -183,6 +191,7 @@ class Matching:
                         micropythonだとeval関数の引数はローカル変数をとらない?
                         ドキュメント参照
                         """
+                        print(dict2)
                         print('false')
                         break
 
