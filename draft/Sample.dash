@@ -1,0 +1,29 @@
+(agent Sample //簡単なメッセージに応答するエージェントSample
+  (property
+    (create :author Taro)
+    (time :date "Apr. 15, 2000")
+  )
+  
+  (initial_facts
+    (worker :name Suzuki)
+    (place :country Japan :region Tohoku)
+    (Msg :performative request-information :from Japan :content question)
+  )
+  
+  (knowledge
+    (rule accept //設計者名の情報要求メッセージの処理
+      (Msg :performative ?p :from ?from :content question) = ?msg
+      (create :author ?author)
+      (!= ?p perform)
+      (== ?from Japan)
+      -->
+      (send :performative inform :to ?from :content (abc ?from))
+      (remove ?from)
+    )
+    (rule deny //それ以外のメッセージ
+      (Msg :from ?from :content ?content)
+      -->
+      (send :performative sorry :to ?from :content ?content)
+    )
+  )
+)
