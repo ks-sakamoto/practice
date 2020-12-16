@@ -184,7 +184,7 @@ class Matching:
                 # self.j_jikko(i)
                 # return dict2
                 actions.append(self.jikko[i])
-                vars.append(copy.copy(dict2))
+                vars.append(copy.copy(dict2))　  # <-変更箇所
 
         return actions, vars
 
