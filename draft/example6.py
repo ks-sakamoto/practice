@@ -133,9 +133,15 @@ class Matching:
                     s = re.sub('\s+', '.*', s)
                     regex = re.compile(s)
                     # propertyとマッチング
-                    m_pro = regex.search(self.fact_pro)
+                    for i in self.fact_pro:
+                        m_pro = regex.search(i)
+                        if m_pro is not None:
+                            break
                     # initial_factsとマッチング
-                    m_ini = regex.search(self.fact_ini)
+                    for i in self.fact_ini:
+                        m_ini = regex.search(i)
+                        if m_ini is not None:
+                            break
 
                     # ファクトとマッチしたら
                     if (m_ini or m_pro) is not None:
@@ -184,7 +190,7 @@ class Matching:
                 # self.j_jikko(i)
                 # return dict2
                 actions.append(self.jikko[i])
-                vars.append(copy.copy(dict2))　  # <-変更箇所
+                vars.append(copy.copy(dict2))  # <-変更箇所
 
         return actions, vars
 
