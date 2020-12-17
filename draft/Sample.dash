@@ -18,7 +18,7 @@
       (== ?from Japan)
       -->
       (send :performative inform :to ?from :content (abc ?from))
-      (remove ?from)
+      (remove ?msg)
     )
     (rule deny //それ以外のメッセージ
       (Msg :from ?from :content ?content)
