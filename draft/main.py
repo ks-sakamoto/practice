@@ -12,8 +12,8 @@ def main():
 
     m = example6.Matching(joken, jikko, fact_pro, fact_ini)
     actions, vars = m.mat()
-    print(f'actions = {actions}')
-    print(f'vars = {vars}')
+    print('actions = {}'.format(actions))
+    print('vars = {}'.format(vars))
 
     for i in range(len(actions)):
         for s in actions[i]:
@@ -41,17 +41,17 @@ def extractOVAtoDict(s, vars):
     regex = re.compile('\w+')
     obj = regex.search(s)
     dict_ova['obj'] = obj.group(0)
-    s = regex.sub('', s, 1)
+    s = re.sub('\w+\s+', '', s, 1)
 
     # attr,valを抽出
-    regex2 = re.compile('\s*(:\w+)\s+([a-zA-Z0-9_\(\) -]+)')
+    regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9_\(\) -]+)')
     while True:
         attr_val = regex2.search(s)
         if attr_val is not None:
             s = regex2.sub('', s, 1)
             dict_ova[attr_val.group(1)] = attr_val.group(2)
-        elif re.search('.*', s) is not None:
-            dict_ova[count] = re.search('.*', s).group(0)
+        elif re.search('^\(', s) is not None:
+            dict_ova[count] = s
             count += 1
             break
         else:
