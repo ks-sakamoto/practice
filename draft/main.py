@@ -4,26 +4,26 @@ def main():
     t = example6.Extract('Sample.dash')
     fact_pro, fact_ini = t.fact()
     joken, jikko, dict1 = t.rule()
-    print(fact_ini)
-    print(fact_pro)
+    # print(fact_ini)
+    # print(fact_pro)
     # print(joken)
     # print(jikko)
     # print(dict1)
 
     m = example6.Matching(joken, jikko, fact_pro, fact_ini)
     actions, vars = m.mat()
-    # print(actions)
-    # print(vars)
+    print(f'actions = {actions}')
+    print(f'vars = {vars}')
 
     for i in range(len(actions)):
         for s in actions[i]:
-            # print(extractOVAtoDict(s, vars[i]))
-            pass
+            print(extractOVAtoDict(s, vars[i]))
 
 
 def extractOVAtoDict(s, vars):
     import re
     dict_ova = {}
+    count = 1
 
     # 先頭と末尾の()を削除（邪魔だったので…）
     s = re.sub('^\(|\)$', '', s)
@@ -47,11 +47,15 @@ def extractOVAtoDict(s, vars):
     regex2 = re.compile('\s*(:\w+)\s+([a-zA-Z0-9_\(\) -]+)')
     while True:
         attr_val = regex2.search(s)
-        if attr_val is None:
-            break
-        else:
+        if attr_val is not None:
             s = regex2.sub('', s, 1)
             dict_ova[attr_val.group(1)] = attr_val.group(2)
+        elif re.search('.*', s) is not None:
+            dict_ova[count] = re.search('.*', s).group(0)
+            count += 1
+            break
+        else:
+            break
     return dict_ova
 
 
