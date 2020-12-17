@@ -8,10 +8,12 @@ def main():
     # print(fact_pro)
     # print(joken)
     # print(jikko)
-    # print(dict1)
+    print(dict1)
 
     m = example6.Matching(joken, jikko, fact_pro, fact_ini)
     actions, vars = m.mat()
+    for c in range(len(vars)):
+        vars[c].update(dict1[c])
     print('actions = {}'.format(actions))
     print('vars = {}'.format(vars))
 

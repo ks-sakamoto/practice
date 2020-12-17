@@ -41,6 +41,7 @@ class Extract:
 
     def rule(self):
         x = []
+        k = []
         dict1 = {}
         joken = []
         jikko = []
@@ -65,7 +66,8 @@ class Extract:
             # regex = re.compile('(?<=\)\s=\s)\?.+')
             # regex2 = re.compile('^\(.*\)(?=\s*=.*)')
 
-            regex3 = re.compile('(^\(.*\))\s*=\s*(\?.+$)')
+            regex = re.compile('(^\(.*\))\s*=\s*(\?.+$)')
+
             """
             micropythonで使えた
             regex = re.compile('\s+=\s+\?.+$')
@@ -74,20 +76,23 @@ class Extract:
             """
 
             # '( ) = ?○○が存在するかどうか
-            for i in x:
-                for s in i:
-                    if regex3.search(s) is not None:
-                        dict1[regex3.search(s).group(
-                            2)] = regex3.search(s).group(1)
+            for i in range(len(x)):
+                dict1.clear()
+                k.append(copy.copy(dict1))
+                for s in x[i]:
+                    if regex.search(s) is not None:
+                        dict1[regex.search(s).group(
+                            2)] = regex.search(s).group(1)
+                    k[i].update(copy.copy(dict1))
 
             for i in x:
                 # '( ) = ?○○'が存在したら'= ?○○'を削除して条件のリストに加える
-                joken.append([regex3.search(s).group(1) if regex3.search(
+                joken.append([regex.search(s).group(1) if regex.search(
                     s) is not None else s for s in i])
             # print('joken = ', joken)
             # print('jikko = ', jikko)
             # print('dict1 = ', dict1)
-            return joken, jikko, dict1
+            return joken, jikko, k
 
 
 t = []
