@@ -9,15 +9,31 @@ class Extract:
         self.file = file
 
     def fact(self):
-        with open(self.file) as f:
+        fact_pro = []
+        fact_ini = []
+        with open(self.file, encoding='utf-8') as f:
             data = f.read().replace('\n', '')
             regex = re.compile('\(property\s*(\(.*?\))\s*\)')
-            mm = regex.search(data)
-            fact_pro = mm.group(1)
+            text = regex.search(data).group(1)
+            regex2 = re.compile('\(.*?\)')
+            while True:
+                pro_exist = regex2.search(text)
+                if pro_exist is not None:
+                    fact_pro.append(pro_exist.group(0))
+                    text = regex2.sub('', text, 1)
+                else:
+                    break
 
             regex = re.compile('\(initial_facts\s*(\(.*?\))\s*\)')
-            mm = regex.search(data)
-            fact_ini = mm.group(1)
+            text = regex.search(data).group(1)
+            while True:
+                ini_exist = regex2.search(text)
+                if ini_exist is not None:
+                    fact_ini.append(ini_exist.group(0))
+                    text = regex2.sub('', text, 1)
+                else:
+                    break
+
             # printではなくreturnさせてmainでprintさせるほうがいいっすね。byなかや
             '''
             print('property = ' + self.fact_pro)
@@ -32,7 +48,7 @@ class Extract:
         jikko = []
 
         # ファイルを1行ずつリストに格納
-        with open(self.file) as f:
+        with open(self.file, encoding='utf-8') as f:
             data = [s.strip() for s in f.readlines()]
 
             # 空白行の要素を削除
@@ -87,23 +103,21 @@ class Matching:
     def mat(self):
         dict2 = {}
         for i in range(len(self.joken)):
+            dict2.clear()
             for s in self.joken[i]:
                 # 比較演算子が存在しなかった場合
-                if re.search('==|!=|>|>=|<|<=', s) is None:  # ここもESP32だとうまく動かないみたい
+                if re.search('==|!=|>|>=|<|<=', s) is None:
                     # ?部分の抽出
                     while True:
                         regex = re.compile('\?\w+')
-                        mm = regex.search(s)
+                        var_exist = regex.search(s)
 
                         # ?が存在したら
-                        if mm is not None:
+                        if var_exist is not None:
                             # ?の手前の:○○を抽出
-                            # vregex = re.compile(':\w+(?=\s\?)')
-                            # val = vregex.search(s)
                             val = re.search(':\w+\s+\?\w+', s).group(0)
                             # 辞書に仮置き(dict = {'?○○':':○○'})
-                            # dict2[mm.group(0)] = val.group(0)
-                            dict2[mm.group(0)] = re.search(
+                            dict2[var_exist.group(0)] = re.search(
                                 ':\w+', val).group(0)
                             # ?○○が除去
                             s = regex.sub('', s, 1)
@@ -113,57 +127,61 @@ class Matching:
                     s = re.sub('\s+', '.*', s)
                     regex = re.compile(s)
                     # propertyとマッチング
-                    m_pro = regex.search(self.fact_pro)
+                    for pro in self.fact_pro:
+                        m_pro = regex.search(pro)
+                        if m_pro is not None:
+                            break
                     # initial_factsとマッチング
-                    m_ini = regex.search(self.fact_ini)
+                    for ini in self.fact_ini:
+                        m_ini = regex.search(ini)
+                        if m_ini is not None:
+                            break
 
                     # ファクトとマッチしたら
                     if (m_ini or m_pro) is not None:
                         for key, value in dict2.items():
                             mm = re.search(':\w+', value)
 
+                            # dict2に変数と値の組を代入
                             if mm is not None:
-                                # regex = re.compile(
-                                #     '(?<=' + mm.group(0) + '\s)' + '\w+')
-                                # mmm = regex.search(self.fact_ini)
-                                mmm = re.search(mm.group(0), self.fact_ini)
                                 regex = re.compile(
-                                    '{0}{1}'.format(mm.group(0), '\s+\w+'))
+                                    '{0}{1}'.format(mm.group(0), '\s+[a-zA-Z0-9_-]+'))  # <- 変更箇所
                                 regex2 = re.compile(
                                     '{0}{1}'.format(mm.group(0), '\s+'))
-                                if mmm is not None:
-                                    # dict2[key] = mmm.group(0)
-                                    h = regex.search(self.fact_ini).group(0)
-                                    h = regex2.sub('', h)
-                                    dict2[key] = h
+                                for ini in self.fact_ini:
+                                    mmm = re.search(mm.group(0), ini)
+                                    if mmm is not None:
+                                        h = regex.search(ini).group(0)
+                                        h = regex2.sub('', h)
+                                        dict2[key] = h
+                                        break
                                 else:
-                                    # dict2[key] = regex.search(
-                                    # self.fact_pro).group(0)
-                                    h = regex.search(self.fact_pro).group(0)
-                                    h = regex2.sub('', h)
-                                    dict2[key] = h
+                                    """
+                                    breakしなかった場合（fact_iniの中に求める':\w+'が存在しなかった場合
+                                    """
+                                    for pro in self.fact_pro:
+                                        mmm = re.search(mm.group(0), pro)
+                                        if mmm is not None:
+                                            h = regex.search(pro).group(0)
+                                            h = regex2.sub('', h)
+                                            dict2[key] = h
                     # ファクトとマッチしなかったとき
                     else:
                         print('false')
-                        dict2.clear()
                         break
 
                 # 比較演算子が存在した場合
                 else:
                     regex = re.compile('\?\w+')
-                    mm = regex.search(s)
+                    var_exist = regex.search(s)
                     # ?が存在した場合
-                    if mm is not None:
-                        s = regex.sub(dict2[mm.group(0)], s)
-                    # ()の中味を抜き出す
-                    # regex = re.compile('(?<=^\().*?(?=\)$)')
-                    # s = regex.search(s)
-                    # t = s.group(0).split(' ')  # スペースで区切る
+                    if var_exist is not None:
+                        s = regex.sub(dict2[var_exist.group(0)], s)
+                    # ()の中味を抜き出してスペースで区切る
                     s = re.sub('\(|\)', '', s)
                     t = s.split(' ')
                     if not eval('t[1]' + t[0] + 't[2]'):
                         print('false')
-                        dict2.clear()
                         break
 
             else:  # 全てマッチしたとき
