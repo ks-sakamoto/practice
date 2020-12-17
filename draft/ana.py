@@ -43,7 +43,7 @@ class Extract:
 
     def rule(self):
         x = []
-        dict1 = {}
+        vars1 = []
         joken = []
         jikko = []
 
@@ -77,10 +77,11 @@ class Extract:
             """
 
             # '( ) = ?○○が存在するかどうか
-            for i in x:
-                for s in i:
+            for i in range(len(x)):
+                vars1.append({})
+                for s in x[i]:
                     if regex.search(s) is not None:
-                        dict1[regex.search(s).group(
+                        vars1[i][regex.search(s).group(
                             2)] = regex.search(s).group(1)
 
             for i in x:
@@ -90,15 +91,16 @@ class Extract:
             # print('joken = ', joken)
             # print('jikko = ', jikko)
             # print('dict1 = ', dict1)
-            return joken, jikko, dict1
+            return joken, jikko, vars1
 
 
 class Matching:
-    def __init__(self, joken, jikko, fact_pro, fact_ini):
+    def __init__(self, joken, jikko, fact_pro, fact_ini, vars1):
         self.joken = joken
         self.jikko = jikko
         self.fact_pro = fact_pro
         self.fact_ini = fact_ini
+        self.vars1 = vars1
 
     def mat(self):
         dict2 = {}
@@ -187,6 +189,7 @@ class Matching:
             else:  # 全てマッチしたとき
                 # self.j_jikko(i)
                 # return dict2
+                dict2.update(self.vars1[i])
                 return self.jikko[i], dict2
 
     def j_jikko(self, i):

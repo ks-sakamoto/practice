@@ -1,25 +1,27 @@
 def main():
-    import example6
+    import ana
 
-    t = example6.Extract('Sample.dash')
+    t = ana.Extract('Sample.dash')
     fact_pro, fact_ini = t.fact()
-    joken, jikko, dict1 = t.rule()
+    joken, jikko, vars1 = t.rule()
     # print(fact_ini)
     # print(fact_pro)
     # print(joken)
     # print(jikko)
-    print(dict1)
+    # print(dict1)
 
-    m = example6.Matching(joken, jikko, fact_pro, fact_ini)
-    actions, vars = m.mat()
-    for c in range(len(vars)):
-        vars[c].update(dict1[c])
+    m = ana.Matching(joken, jikko, fact_pro, fact_ini, vars1)
+    actions, vars2 = m.mat()
+    # for c in range(len(vars)):
+    #     vars2[c].update(vars1[c])
     print('actions = {}'.format(actions))
-    print('vars = {}'.format(vars))
+    print('vars = {}'.format(vars2))
 
-    for i in range(len(actions)):
-        for s in actions[i]:
-            print(extractOVAtoDict(s, vars[i]))
+    # for i in range(len(actions)):
+    #     for s in actions[i]:
+    #         print(extractOVAtoDict(s, vars[i]))
+    for s in actions:
+        print(extractOVAtoDict(s, vars2))
 
 
 def extractOVAtoDict(s, vars):
