@@ -32,20 +32,22 @@ def extractOVAtoDict(s, vars):
     # 先頭と末尾の()を削除（邪魔だったので…）
     s = re.sub('^\(|\)$', '', s)
 
-    # 変数が存在したらvarsから対応する値を代入
-    regex = re.compile('\?\w+')
-    while True:
-        var_find = regex.search(s)
-        if var_find is None:
-            break
-        else:
-            s = regex.sub(vars[var_find.group(0)], s, 1)
-
     # objを抽出
     regex = re.compile('\w+')
     obj = regex.search(s)
     dict_ova['obj'] = obj.group(0)
     s = re.sub('\w+\s+', '', s, 1)
+
+    # 変数が存在したらvarsから対応する値を代入
+    regex = re.compile('\?\w+')
+    while True:
+        if dict_ova['obj'] == 'bind' or dict_ova['obj'] == 'modify':
+            break
+        var_find = regex.search(s)
+        if var_find is None:
+            break
+        else:
+            s = regex.sub(vars[var_find.group(0)], s, 1)
 
     # attr,valを抽出
     regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9_\(\) -]+)')
@@ -55,9 +57,13 @@ def extractOVAtoDict(s, vars):
             s = regex2.sub('', s, 1)
             dict_ova[attr_val.group(1)] = attr_val.group(2)
         elif re.search('^\(', s) is not None:
-            dict_ova[count] = s
+            dict_ova[count] = re.search('^\(.+\)', s).group(0)
+            s = re.sub('^\(.+\)', '', s, 1)
             count += 1
-            break
+        elif re.search('\s*[a-zA-Z0-9?_:-]+', s) is not None:
+            dict_ova[count] = re.search('[a-zA-Z0-9?_:-]+', s).group(0)
+            s = re.sub('\s*[a-zA-Z0-9?_:-]+', '', s, 1)
+            count += 1
         else:
             break
     return dict_ova
