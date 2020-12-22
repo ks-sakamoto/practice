@@ -133,44 +133,34 @@ class Matching:
                         m_pro = regex.search(pro)
                         if m_pro is not None:
                             break
-                    # initial_factsとマッチング
-                    for ini in self.fact_ini:
-                        m_ini = regex.search(ini)
-                        if m_ini is not None:
+                    else:
+                        # initial_factsとマッチング
+                        for ini in self.fact_ini:
+                            m_ini = regex.search(ini)
+                            if m_ini is not None:
+                                break
+                        else:
+                            print('false')
                             break
 
                     # ファクトとマッチしたら
-                    if (m_ini or m_pro) is not None:
-                        for key, value in dict2.items():
-                            mm = re.search(':\w+', value)
+                    for key, value in dict2.items():
+                        mm = re.search(':\w+', value)
+                        if mm is not None:
+                            regex = re.compile(
+                                '{0}{1}'.format(mm.group(0), '\s+[a-zA-Z0-9_-]+'))
+                            regex2 = re.compile(
+                                '{0}{1}'.format(mm.group(0), '\s+'))
 
-                            # dict2に変数と値の組を代入
-                            if mm is not None:
-                                regex = re.compile(
-                                    '{0}{1}'.format(mm.group(0), '\s+[a-zA-Z0-9_-]+'))  # <- 変更箇所
-                                regex2 = re.compile(
-                                    '{0}{1}'.format(mm.group(0), '\s+'))
-                                for ini in self.fact_ini:
-                                    mmm = re.search(mm.group(0), ini)
-                                    if mmm is not None:
-                                        h = regex.search(ini).group(0)
-                                        h = regex2.sub('', h)
-                                        dict2[key] = h
-                                        break
-                                else:
-                                    """
-                                    breakしなかった場合（fact_iniの中に求める':\w+'が存在しなかった場合
-                                    """
-                                    for pro in self.fact_pro:
-                                        mmm = re.search(mm.group(0), pro)
-                                        if mmm is not None:
-                                            h = regex.search(pro).group(0)
-                                            h = regex2.sub('', h)
-                                            dict2[key] = h
-                    # ファクトとマッチしなかったとき
-                    else:
-                        print('false')
-                        break
+                            if m_pro is not None:
+                                h = regex.search(pro).group(0)
+                                h = regex2.sub('', h)
+                                dict2[key] = h
+
+                            elif m_ini is not None:
+                                h = regex.search(ini).group(0)
+                                h = regex2.sub('', h)
+                                dict2[key] = h
 
                 # 比較演算子が存在した場合
                 else:
