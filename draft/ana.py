@@ -116,32 +116,38 @@ class Matching:
 
                         # ?が存在したら
                         if var_exist is not None:
-                            # ?の手前の:○○を抽出
-                            val = re.search(':\w+\s+\?\w+', s).group(0)
-                            # 辞書に仮置き(dict = {'?○○':':○○'})
-                            dict2[var_exist.group(0)] = re.search(
-                                ':\w+', val).group(0)
-                            # ?○○が除去
-                            s = regex.sub('', s, 1)
+                            if var_exist.group(0) in dict2.keys():
+                                s = regex.sub('', s, 1)
+                            else:
+                                # ?の手前の:○○を抽出
+                                val = re.search(':\w+\s+\?\w+', s).group(0)
+                                # 辞書に仮置き(dict = {'?○○':':○○'})
+                                dict2[var_exist.group(0)] = re.search(
+                                    ':\w+', val).group(0)
+                                # ?○○が除去
+                                s = regex.sub('', s, 1)
                         else:
                             break
                     # スペースを正規表現に置き換え
                     s = re.sub('\s+', '.*', s)
                     regex = re.compile(s)
+
+                    m_pro_count = 0
+                    m_ini_count = 0
                     # propertyとマッチング
                     for pro in self.fact_pro:
                         m_pro = regex.search(pro)
                         if m_pro is not None:
-                            break
-                    else:
-                        # initial_factsとマッチング
-                        for ini in self.fact_ini:
-                            m_ini = regex.search(ini)
-                            if m_ini is not None:
-                                break
-                        else:
-                            print('false')
-                            break
+                            m_pro_count += 1
+                    # initial_factsとマッチング
+                    for ini in self.fact_ini:
+                        m_ini = regex.search(ini)
+                        if m_ini is not None:
+                            m_ini_count += 1
+                    # マッチしなければbreak
+                    if m_pro_count == 0 and m_ini_count == 0:
+                        print('false')
+                        break
 
                     # ファクトとマッチしたら
                     for key, value in dict2.items():
@@ -155,12 +161,12 @@ class Matching:
                             if m_pro is not None:
                                 h = regex.search(pro).group(0)
                                 h = regex2.sub('', h)
-                                dict2[key] = h
+                                dict2[key] = [h]
 
                             elif m_ini is not None:
                                 h = regex.search(ini).group(0)
                                 h = regex2.sub('', h)
-                                dict2[key] = h
+                                dict2[key] = [h]
 
                 # 比較演算子が存在した場合
                 else:
