@@ -82,7 +82,7 @@ class Extract:
                 for s in x[i]:
                     if regex.search(s) is not None:
                         vars1[i][regex.search(s).group(
-                            2)] = regex.search(s).group(1)
+                            2)] = [regex.search(s).group(1)]
 
             for i in x:
                 # '( ) = ?○○'が存在したら'= ?○○'を削除して条件のリストに加える
@@ -132,41 +132,36 @@ class Matching:
                     s = re.sub('\s+', '.*', s)
                     regex = re.compile(s)
 
-                    m_pro_count = 0
-                    m_ini_count = 0
+                    match_fact_list = []
                     # propertyとマッチング
                     for pro in self.fact_pro:
                         m_pro = regex.search(pro)
                         if m_pro is not None:
-                            m_pro_count += 1
+                            match_fact_list.append(pro)
                     # initial_factsとマッチング
                     for ini in self.fact_ini:
                         m_ini = regex.search(ini)
                         if m_ini is not None:
-                            m_ini_count += 1
+                            match_fact_list.append(ini)
                     # マッチしなければbreak
-                    if m_pro_count == 0 and m_ini_count == 0:
+                    if not match_fact_list:
                         print('false')
                         break
 
                     # ファクトとマッチしたら
                     for key, value in dict2.items():
-                        mm = re.search(':\w+', value)
-                        if mm is not None:
+                        if type(value) is not list:
+                            dict2[key] = []
                             regex = re.compile(
-                                '{0}{1}'.format(mm.group(0), '\s+[a-zA-Z0-9_-]+'))
+                                '{0}{1}'.format(value, '\s+[a-zA-Z0-9_-]+'))
                             regex2 = re.compile(
-                                '{0}{1}'.format(mm.group(0), '\s+'))
+                                '{0}{1}'.format(value, '\s+'))
 
-                            if m_pro is not None:
-                                h = regex.search(pro).group(0)
-                                h = regex2.sub('', h)
-                                dict2[key] = [h]
-
-                            elif m_ini is not None:
-                                h = regex.search(ini).group(0)
-                                h = regex2.sub('', h)
-                                dict2[key] = [h]
+                            for match_fact in match_fact_list:
+                                h = regex.search(match_fact)
+                                if h is not None:
+                                    dict2[key].append(
+                                        regex2.sub('', h.group(0)))
 
                 # 比較演算子が存在した場合
                 else:
@@ -174,7 +169,7 @@ class Matching:
                     var_exist = regex.search(s)
                     # ?が存在した場合
                     if var_exist is not None:
-                        s = regex.sub(dict2[var_exist.group(0)], s)
+                        s = regex.sub(dict2[var_exist.group(0)][0], s)  # <-(仮)
                     # ()の中味を抜き出してスペースで区切る
                     s = re.sub('\(|\)', '', s)
                     t = s.split(' ')
