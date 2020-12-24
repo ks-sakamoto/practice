@@ -139,12 +139,32 @@ class Matching:
                     mm = regex2.search(s)
                     if mm is not None:
                         for var in dict2['?{}'.format(mm.group(1))]:
-                            s_list.append(regex2.sub(var, s, 1))
+                            s_copy = regex2.sub(var, s, 1)
 
-                    if not s_list:
-                        s_list = [s]
+                            # スペースを正規表現に置き換え
+                            s_copy = re.sub('\s+', '.*', s_copy)
+                            regex = re.compile(s_copy)
 
-                    for s in s_list:
+                            match_fact_list = []
+                            # propertyとマッチング
+                            for pro in self.fact_pro:
+                                m_pro = regex.search(pro)
+                                if m_pro is not None:
+                                    match_fact_list.append(pro)
+                            # initial_factsとマッチング
+                            for ini in self.fact_ini:
+                                m_ini = regex.search(ini)
+                                if m_ini is not None:
+                                    match_fact_list.append(ini)
+                            # マッチしたらbreak
+                            if match_fact_list:
+                                dict2['?{}'.format(mm.group(1))].clear()
+                                dict2['?{}'.format(mm.group(1))].append(var)
+                                break
+                        else:
+                            print('false')
+                            break
+                    else:
                         # スペースを正規表現に置き換え
                         s = re.sub('\s+', '.*', s)
                         regex = re.compile(s)
@@ -160,12 +180,10 @@ class Matching:
                             m_ini = regex.search(ini)
                             if m_ini is not None:
                                 match_fact_list.append(ini)
-                        # マッチしたらbreak
-                        if match_fact_list:
+                        # マッチしなければbreak
+                        if not match_fact_list:
+                            print('false')
                             break
-                    else:
-                        print('false')
-                        break
 
                     # ファクトとマッチしたら
                     for key, value in dict2.items():
@@ -197,6 +215,8 @@ class Matching:
                             if not eval('t[1]' + t[0] + 't[2]'):
                                 continue
                             else:
+                                dict2[var_exist.group(0)].clear()
+                                dict2[var_exist.group(0)].append(var)
                                 break
                         else:
                             print('false')
