@@ -112,7 +112,7 @@ class Matching:
                     s_list = []
                     # ?部分の抽出
                     while True:
-                        regex = re.compile('\?\w+')
+                        regex = re.compile('\?(\w+)')
                         var_exist = regex.search(s)
 
                         # ?が存在したら
@@ -125,19 +125,27 @@ class Matching:
                                     ':\w+', val).group(0)
                                 # ?○○が除去
                                 s = regex.sub('', s, 1)
+                            elif len(dict2[var_exist.group(0)]) == 1:
+                                s = regex.sub(
+                                    dict2[var_exist.group(0)][0], s, 1)
                             else:
-                                for var in dict2[var_exist.group(0)]:
-                                    s_list.append(regex.sub(var, s))
-                                s = regex.sub('', s, 1)
+                                s = regex.sub(':{}:'.format(
+                                    var_exist.group(1)), s, 1)
 
                         else:
                             break
 
+                    regex2 = re.compile(':(\w+):')
+                    mm = regex2.search(s)
+                    if mm is not None:
+                        for var in dict2['?{}'.format(mm.group(1))]:
+                            s_list.append(regex2.sub(var, s, 1))
+
                     if not s_list:
                         s_list = [s]
 
-                    # スペースを正規表現に置き換え
                     for s in s_list:
+                        # スペースを正規表現に置き換え
                         s = re.sub('\s+', '.*', s)
                         regex = re.compile(s)
 
@@ -170,7 +178,8 @@ class Matching:
 
                             for match_fact in match_fact_list:
                                 h = regex.search(match_fact)
-                                if h is not None:
+                                if (h is not None) and \
+                                        (regex2.sub('', h.group(0)) not in dict2[key]):
                                     dict2[key].append(
                                         regex2.sub('', h.group(0)))
 
