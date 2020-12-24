@@ -109,6 +109,7 @@ class Matching:
             for s in self.joken[i]:
                 # 比較演算子が存在しなかった場合
                 if re.search('==|!=|>|>=|<|<=', s) is None:
+                    s_list = []
                     # ?部分の抽出
                     while True:
                         regex = re.compile('\?\w+')
@@ -116,9 +117,7 @@ class Matching:
 
                         # ?が存在したら
                         if var_exist is not None:
-                            if var_exist.group(0) in dict2.keys():
-                                s = regex.sub('', s, 1)
-                            else:
+                            if not var_exist.group(0) in dict2.keys():
                                 # ?の手前の:○○を抽出
                                 val = re.search(':\w+\s+\?\w+', s).group(0)
                                 # 辞書に仮置き(dict = {'?○○':':○○'})
@@ -126,25 +125,37 @@ class Matching:
                                     ':\w+', val).group(0)
                                 # ?○○が除去
                                 s = regex.sub('', s, 1)
+                            else:
+                                for var in dict2[var_exist.group(0)]:
+                                    s_list.append(regex.sub(var, s))
+                                s = regex.sub('', s, 1)
+
                         else:
                             break
-                    # スペースを正規表現に置き換え
-                    s = re.sub('\s+', '.*', s)
-                    regex = re.compile(s)
 
-                    match_fact_list = []
-                    # propertyとマッチング
-                    for pro in self.fact_pro:
-                        m_pro = regex.search(pro)
-                        if m_pro is not None:
-                            match_fact_list.append(pro)
-                    # initial_factsとマッチング
-                    for ini in self.fact_ini:
-                        m_ini = regex.search(ini)
-                        if m_ini is not None:
-                            match_fact_list.append(ini)
-                    # マッチしなければbreak
-                    if not match_fact_list:
+                    if not s_list:
+                        s_list = [s]
+
+                    # スペースを正規表現に置き換え
+                    for s in s_list:
+                        s = re.sub('\s+', '.*', s)
+                        regex = re.compile(s)
+
+                        match_fact_list = []
+                        # propertyとマッチング
+                        for pro in self.fact_pro:
+                            m_pro = regex.search(pro)
+                            if m_pro is not None:
+                                match_fact_list.append(pro)
+                        # initial_factsとマッチング
+                        for ini in self.fact_ini:
+                            m_ini = regex.search(ini)
+                            if m_ini is not None:
+                                match_fact_list.append(ini)
+                        # マッチしたらbreak
+                        if match_fact_list:
+                            break
+                    else:
                         print('false')
                         break
 
@@ -169,13 +180,18 @@ class Matching:
                     var_exist = regex.search(s)
                     # ?が存在した場合
                     if var_exist is not None:
-                        s = regex.sub(dict2[var_exist.group(0)][0], s)  # <-(仮)
-                    # ()の中味を抜き出してスペースで区切る
-                    s = re.sub('\(|\)', '', s)
-                    t = s.split(' ')
-                    if not eval('t[1]' + t[0] + 't[2]'):
-                        print('false')
-                        break
+                        for var in dict2[var_exist.group(0)]:
+                            s_copy = regex.sub(var, s)
+                            # ()の中味を抜き出してスペースで区切る
+                            s_copy = re.sub('\(|\)', '', s_copy)
+                            t = s_copy.split(' ')
+                            if not eval('t[1]' + t[0] + 't[2]'):
+                                continue
+                            else:
+                                break
+                        else:
+                            print('false')
+                            break
 
             else:  # 全てマッチしたとき
                 # self.j_jikko(i)
