@@ -1,6 +1,3 @@
-"""
-researchのanalyze.py
-"""
 import re
 
 
@@ -33,7 +30,6 @@ class Extract:
                     text = regex2.sub('', text, 1)
                 else:
                     break
-
             # printではなくreturnさせてmainでprintさせるほうがいいっすね。byなかや
             '''
             print('property = ' + self.fact_pro)
@@ -43,7 +39,7 @@ class Extract:
 
     def rule(self):
         x = []
-        vars1 = []
+        var1 = []
         joken = []
         jikko = []
 
@@ -78,10 +74,10 @@ class Extract:
 
             # '( ) = ?○○が存在するかどうか
             for i in range(len(x)):
-                vars1.append({})
+                var1.append({})
                 for s in x[i]:
                     if regex.search(s) is not None:
-                        vars1[i][regex.search(s).group(
+                        var1[i][regex.search(s).group(
                             2)] = [regex.search(s).group(1)]
 
             for i in x:
@@ -91,21 +87,21 @@ class Extract:
             # print('joken = ', joken)
             # print('jikko = ', jikko)
             # print('dict1 = ', dict1)
-            return joken, jikko, vars1
+            return joken, jikko, var1
 
 
 class Matching:
-    def __init__(self, joken, jikko, fact_pro, fact_ini, vars1):
+    def __init__(self, joken, jikko, fact_pro, fact_ini, var1):
         self.joken = joken
         self.jikko = jikko
         self.fact_pro = fact_pro
         self.fact_ini = fact_ini
-        self.vars1 = vars1
+        self.var1 = var1
 
     def mat(self):
-        dict2 = {}
+        var2 = {}
         for i in range(len(self.joken)):
-            dict2.clear()
+            var2.clear()
             for s in self.joken[i]:
                 # 比較演算子が存在しなかった場合
                 if re.search('==|!=|>|>=|<|<=', s) is None:
@@ -116,18 +112,18 @@ class Matching:
 
                         # ?が存在したら
                         if var_exist is not None:
-                            if not var_exist.group(0) in dict2.keys():
+                            if not var_exist.group(0) in var2.keys():
                                 # ?の手前の:○○を抽出
-                                val = re.search(':\w+\s+\?\w+', s).group(0)
+                                val = re.search('(:\w+)\s+\?\w+', s)
                                 # 辞書に仮置き(dict = {'?○○':':○○'})
-                                dict2[var_exist.group(0)] = re.search(
-                                    ':\w+', val).group(0)
+                                var2[var_exist.group(0)] = val.group(1)
                                 # ?○○が除去
                                 s = regex.sub('', s, 1)
-                            elif len(dict2[var_exist.group(0)]) == 1:
+                            elif len(var2[var_exist.group(0)]) == 1:
                                 s = regex.sub(
-                                    dict2[var_exist.group(0)][0], s, 1)
+                                    var2[var_exist.group(0)][0], s, 1)
                             else:
+                                # マッチする変数が2つ以上あったとき
                                 s = regex.sub(':{}:'.format(
                                     var_exist.group(1)), s, 1)
 
@@ -135,9 +131,9 @@ class Matching:
                             break
 
                     regex2 = re.compile(':(\w+):')
-                    mm = regex2.search(s)
-                    if mm is not None:
-                        for var in dict2['?{}'.format(mm.group(1))]:
+                    multi_var = regex2.search(s)
+                    if multi_var is not None:
+                        for var in var2['?{}'.format(multi_var.group(1))]:
                             s_copy = regex2.sub(var, s, 1)
 
                             # スペースを正規表現に置き換え
@@ -157,8 +153,9 @@ class Matching:
                                     match_fact_list.append(ini)
                             # マッチしたらマッチした変数を残して抜ける
                             if match_fact_list:
-                                dict2['?{}'.format(mm.group(1))].clear()
-                                dict2['?{}'.format(mm.group(1))].append(var)
+                                var2['?{}'.format(multi_var.group(0))].clear()
+                                var2['?{}'.format(
+                                    multi_var.group(0))].append(var)
                                 break
                         else:
                             print('false')
@@ -185,9 +182,9 @@ class Matching:
                             break
 
                     # ファクトとマッチしたら
-                    for key, value in dict2.items():
+                    for key, value in var2.items():
                         if type(value) is not list:
-                            dict2[key] = []
+                            var2[key] = []
                             regex = re.compile(
                                 '{0}{1}'.format(value, '\s+[a-zA-Z0-9_"\'@-]+'))
                             regex2 = re.compile(
@@ -196,8 +193,8 @@ class Matching:
                             for match_fact in match_fact_list:
                                 h = regex.search(match_fact)
                                 if (h is not None) and \
-                                        (regex2.sub('', h.group(0)) not in dict2[key]):
-                                    dict2[key].append(
+                                        (regex2.sub('', h.group(0)) not in var2[key]):
+                                    var2[key].append(
                                         regex2.sub('', h.group(0)))
 
                 # 比較演算子が存在した場合
@@ -206,16 +203,19 @@ class Matching:
                     var_exist = regex.search(s)
                     # ?が存在した場合
                     if var_exist is not None:
-                        for var in dict2[var_exist.group(0)]:
+                        for var in var2[var_exist.group(0)]:
                             s_copy = regex.sub(var, s)
                             # ()の中味を抜き出してスペースで区切る
                             s_copy = re.sub('\(|\)', '', s_copy)
                             t = s_copy.split(' ')
-                            if not eval('t[1]' + t[0] + 't[2]'):
+                            print('"{}"{}"{}"'.format(t[1], t[0], t[2]))
+                            # t[1]にはいっている文字列をいったんformatで取り出してからstring型に変換してやれば通った。そのままだとString型として認識できてなかった。
+                            if not eval('"{}"{}"{}"'.format(t[1], t[0], t[2])):
+                                # if not eval(t[1] + t[0] + 't[2]'):
                                 continue
                             else:
-                                dict2[var_exist.group(0)].clear()
-                                dict2[var_exist.group(0)].append(var)
+                                var2[var_exist.group(0)].clear()
+                                var2[var_exist.group(0)].append(var)
                                 break
                         else:
                             print('false')
@@ -224,8 +224,8 @@ class Matching:
             else:  # 全てマッチしたとき
                 # self.j_jikko(i)
                 # return dict2
-                dict2.update(self.vars1[i])
-                return self.jikko[i], dict2
+                var2.update(self.var1[i])
+                return self.jikko[i], var2
 
     def j_jikko(self, i):
         for s in self.jikko[i]:
