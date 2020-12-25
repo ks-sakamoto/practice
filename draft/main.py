@@ -12,8 +12,6 @@ def main():
 
     m = ana.Matching(joken, jikko, fact_pro, fact_ini, vars1)
     actions, vars2 = m.mat()
-    # for c in range(len(vars)):
-    #     vars2[c].update(vars1[c])
     print('actions = {}'.format(actions))
     print('vars = {}'.format(vars2))
 
@@ -47,10 +45,10 @@ def extractOVAtoDict(s, vars):
         if var_find is None:
             break
         else:
-            s = regex.sub(vars[var_find.group(0)], s, 1)
+            s = regex.sub(vars[var_find.group(0)][0], s, 1)
 
     # attr,valを抽出
-    regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9_\(\) -]+)')
+    regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9_\(\)"\'@ -]+)')
     while True:
         attr_val = regex2.search(s)
         if attr_val is not None:

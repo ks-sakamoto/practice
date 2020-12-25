@@ -109,7 +109,6 @@ class Matching:
             for s in self.joken[i]:
                 # 比較演算子が存在しなかった場合
                 if re.search('==|!=|>|>=|<|<=', s) is None:
-                    s_list = []
                     # ?部分の抽出
                     while True:
                         regex = re.compile('\?(\w+)')
@@ -156,7 +155,7 @@ class Matching:
                                 m_ini = regex.search(ini)
                                 if m_ini is not None:
                                     match_fact_list.append(ini)
-                            # マッチしたらbreak
+                            # マッチしたらマッチした変数を残して抜ける
                             if match_fact_list:
                                 dict2['?{}'.format(mm.group(1))].clear()
                                 dict2['?{}'.format(mm.group(1))].append(var)
@@ -190,7 +189,7 @@ class Matching:
                         if type(value) is not list:
                             dict2[key] = []
                             regex = re.compile(
-                                '{0}{1}'.format(value, '\s+[a-zA-Z0-9_-]+'))
+                                '{0}{1}'.format(value, '\s+[a-zA-Z0-9_"\'@-]+'))
                             regex2 = re.compile(
                                 '{0}{1}'.format(value, '\s+'))
 
