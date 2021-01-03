@@ -9,24 +9,24 @@ class Extract:
         fact_pro = []
         fact_ini = []
         with open(self.file, encoding='utf-8') as f:
-            data = f.read().replace('\n', '')
-            regex = re.compile('\(property\s*(\(.*?\))\s*\)')
+            data = f.read()
+            regex = re.compile('\(property.*\\n\s*((\(.*?\)\\n\s*)*)')
             text = regex.search(data).group(1)
-            regex2 = re.compile('\(.*?\)')
+            regex2 = re.compile('(\(.*?\))\\n')
             while True:
                 pro_exist = regex2.search(text)
                 if pro_exist is not None:
-                    fact_pro.append(pro_exist.group(0))
+                    fact_pro.append(pro_exist.group(1))
                     text = regex2.sub('', text, 1)
                 else:
                     break
 
-            regex = re.compile('\(initial_facts\s*(\(.*?\))\s*\)')
+            regex = re.compile('\(initial_facts.*\\n\s*((\(.*?\)\\n\s*)*)')
             text = regex.search(data).group(1)
             while True:
                 ini_exist = regex2.search(text)
                 if ini_exist is not None:
-                    fact_ini.append(ini_exist.group(0))
+                    fact_ini.append(ini_exist.group(1))
                     text = regex2.sub('', text, 1)
                 else:
                     break
@@ -136,9 +136,12 @@ class Matching:
                         for var in var2['?{}'.format(multi_var.group(1))]:
                             s_copy = regex2.sub(var, s, 1)
 
-                            # スペースを正規表現に置き換え
+                            # スペース, (), ?を正規表現に置き換え
                             s_copy = re.sub('\s+', '.*', s_copy)
-                            regex = re.compile(s_copy)
+                            s_copy = re.sub('\)', '\)', s_copy)
+                            s_copy = re.sub('\(', '\(', s_copy)
+                            s_copy = re.sub('\?', '\?', s_copy)
+                            regex = re.compile(s)
 
                             match_fact_list = []
                             # propertyとマッチング
@@ -161,8 +164,11 @@ class Matching:
                             print('false')
                             break
                     else:
-                        # スペースを正規表現に置き換え
+                        # スペース, (), ?を正規表現に置き換え
                         s = re.sub('\s+', '.*', s)
+                        s = re.sub('\)', '\)', s)
+                        s = re.sub('\(', '\(', s)
+                        s = re.sub('\?', '\?', s)
                         regex = re.compile(s)
 
                         match_fact_list = []
