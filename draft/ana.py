@@ -192,11 +192,13 @@ class Matching:
                         if type(value) is not list:
                             var2[key] = []
                             regex = re.compile(
-                                '{0}{1}'.format(value, '\s+[a-zA-Z0-9_"\'@-]+'))
+                                '{0}{1}'.format(value, '\s+[a-zA-Z0-9?_"\'()@-]+'))
                             regex2 = re.compile(
                                 '{0}{1}'.format(value, '\s+'))
 
                             for match_fact in match_fact_list:
+                                # 先頭と末尾の()を削除
+                                match_fact = re.sub('^\(|\)$', '', match_fact)
                                 h = regex.search(match_fact)
                                 if (h is not None) and \
                                         (regex2.sub('', h.group(0)) not in var2[key]):
