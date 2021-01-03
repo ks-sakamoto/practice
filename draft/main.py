@@ -1,3 +1,6 @@
+import re
+
+
 def main():
     import ana
 
@@ -23,7 +26,6 @@ def main():
 
 
 def extractOVAtoDict(s, vars):
-    import re
     dict_ova = {}
     count = 1
 
@@ -48,7 +50,7 @@ def extractOVAtoDict(s, vars):
             s = regex.sub(vars[var_find.group(0)][0], s, 1)
 
     # attr,valを抽出
-    regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9_\(\)"\'@ -]+)')
+    regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9?_()"\'@ -]+)')
     while True:
         attr_val = regex2.search(s)
         if attr_val is not None:
@@ -58,13 +60,54 @@ def extractOVAtoDict(s, vars):
             dict_ova[count] = re.search('^\(.+\)', s).group(0)
             s = re.sub('^\(.+\)', '', s, 1)
             count += 1
-        elif re.search('\s*[a-zA-Z0-9?_:-]+', s) is not None:
-            dict_ova[count] = re.search('[a-zA-Z0-9?_:-]+', s).group(0)
-            s = re.sub('\s*[a-zA-Z0-9?_:-]+', '', s, 1)
+        # modifyの場合 ?var:attr を抽出
+        elif re.search('\?\w+:\w+', s) is not None:
+            dict_ova[count] = re.search('\?\w+:\w+', s).group(0)
+            s = re.sub('\?\w+:\w+', '', s, 1)
+            count += 1
+        # modifyの場合 value を抽出
+        elif re.search('\(.+\)', s) is not None:
+            dict_ova[count] = re.search('\(.+\)', s).group(0)
+            s = re.sub('\(.+\)', '', s, 1)
             count += 1
         else:
             break
     return dict_ova
+
+
+def action_make(fact, fact_ini):
+    fact_ini.append(fact)
+
+
+def action_remove(fact, fact_ini):
+    if fact in fact_ini:
+        fact_ini.remove(fact)
+    else:
+        print("can't remove {}".format(fact))
+
+
+def aciton_modify(modi_varattr, fact_ini, value, vars):
+    var = re.search('\?\w+', modi_varattr).group(0)
+    attr = re.search(':\w+', modi_varattr).group(0)
+
+    # 両端の括弧を削除
+    fact = re.sub('^\(|\)$', '', vars[var][0])
+
+    mm = re.search('{}\s+([a-zA-Z0-9_()"\'?@ -]+)'.format(attr), fact)
+
+    if mm is not None:
+        # 元の値のスペース, (), ?を正規表現に置き換え
+        ori_value = re.sub('\s+', '.*', mm.group(1))
+        ori_value = re.sub('\)', '\)', ori_value)
+        ori_value = re.sub('\(', '\(', ori_value)
+        ori_value = re.sub('\?', '\?', ori_value)
+        # 元の値を新しい値に置き換える
+        new_fact = re.sub(ori_value, value, vars[var][0])
+    else:
+        print("Can't modify")
+
+    fact_ini.remove(vars[var][0])
+    fact_ini.append(new_fact)
 
 
 if __name__ == '__main__':
