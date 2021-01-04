@@ -9,8 +9,8 @@ def main():
     joken, jikko, var1 = t.rule()
     print('initialfacts = {}'.format(fact_ini))
     print('property = {}'.format(fact_pro))
-    print(f'joken = {joken}')
-    print(f'jikko = {jikko}')
+    print('joken = {}'.format(joken))
+    print('jikko = {}'.format(jikko))
 
     m = ana.Matching(joken, jikko, fact_pro, fact_ini, var1)
     actions, vars = m.mat()
@@ -120,9 +120,9 @@ def aciton_modify(modi_varattr, new_value, fact_ini, vars):
     if mm is not None:
         # modify前の値のスペース, (), ?を正規表現に置き換え
         ori_value = re.sub('\s+', '.*', mm.group(1))
-        ori_value = re.sub('\)', '\)', ori_value)
-        ori_value = re.sub('\(', '\(', ori_value)
-        ori_value = re.sub('\?', '\?', ori_value)
+        ori_value = ori_value.replace(')', '\)')
+        ori_value = ori_value.replace('(', '\(')
+        ori_value = ori_value.replace('?', '\?')
         # 新しい値に置き換える
         new_fact = re.sub(ori_value, new_value, ori_fact)
     else:

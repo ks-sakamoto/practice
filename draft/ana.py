@@ -10,9 +10,9 @@ class Extract:
         fact_ini = []
         with open(self.file, encoding='utf-8') as f:
             data = f.read()
-            regex = re.compile('\(property.*\\n\s*((\(.*?\)\\n\s*)*)')
+            regex = re.compile('\(property.*?\r\n\s*((\(.*?\)\r\n\s*)*)')
             text = regex.search(data).group(1)
-            regex2 = re.compile('(\(.*?\))\\n')
+            regex2 = re.compile('(\(.*?\))\r\n')
             while True:
                 pro_exist = regex2.search(text)
                 if pro_exist is not None:
@@ -21,7 +21,7 @@ class Extract:
                 else:
                     break
 
-            regex = re.compile('\(initial_facts.*\\n\s*((\(.*?\)\\n\s*)*)')
+            regex = re.compile('\(initial_facts.*?\r\n\s*((\(.*?\)\r\n\s*)*)')
             text = regex.search(data).group(1)
             while True:
                 ini_exist = regex2.search(text)
@@ -138,10 +138,10 @@ class Matching:
 
                             # スペース, (), ?を正規表現に置き換え
                             s_copy = re.sub('\s+', '.*', s_copy)
-                            s_copy = re.sub('\)', '\)', s_copy)
-                            s_copy = re.sub('\(', '\(', s_copy)
-                            s_copy = re.sub('\?', '\?', s_copy)
-                            regex = re.compile(s)
+                            s_copy = s_copy.replace(')', '\)')
+                            s_copy = s_copy.replace('(', '\(')
+                            s_copy = s_copy.replace('?', '\?')
+                            regex = re.compile(s_copy)
 
                             match_fact_list = []
                             # propertyとマッチング
@@ -166,9 +166,9 @@ class Matching:
                     else:
                         # スペース, (), ?を正規表現に置き換え
                         s = re.sub('\s+', '.*', s)
-                        s = re.sub('\)', '\)', s)
-                        s = re.sub('\(', '\(', s)
-                        s = re.sub('\?', '\?', s)
+                        s = s.replace(')', '\)')
+                        s = s.replace('(', '\(')
+                        s = s.replace('?', '\?')
                         regex = re.compile(s)
 
                         match_fact_list = []
