@@ -4,25 +4,36 @@ import re
 def main():
     import ana
 
-    t = ana.Extract('Sample.dash')
+    t = ana.Extract('Sample3.dash')
     fact_pro, fact_ini = t.fact()
-    joken, jikko, vars1 = t.rule()
-    # print(fact_ini)
-    # print(fact_pro)
-    # print(joken)
-    # print(jikko)
-    # print(dict1)
+    joken, jikko, var1 = t.rule()
+    print('initialfacts = {}'.format(fact_ini))
+    print('property = {}'.format(fact_pro))
+    print(f'joken = {joken}')
+    print(f'jikko = {jikko}')
 
-    m = ana.Matching(joken, jikko, fact_pro, fact_ini, vars1)
-    actions, vars2 = m.mat()
+    m = ana.Matching(joken, jikko, fact_pro, fact_ini, var1)
+    actions, vars = m.mat()
     print('actions = {}'.format(actions))
-    print('vars = {}'.format(vars2))
+    print('vars = {}'.format(vars))
 
     # for i in range(len(actions)):
     #     for s in actions[i]:
     #         print(extractOVAtoDict(s, vars[i]))
     for s in actions:
-        print(extractOVAtoDict(s, vars2))
+        d = extractOVAtoDict(s, vars)
+        print(d)
+        #############################################
+        if d['obj'] == 'make':
+            action_make(d[1], fact_ini)
+            print(fact_ini)
+        elif d['obj'] == 'remove':
+            action_remove(d[1], fact_ini)
+            print(fact_ini)
+        elif d['obj'] == 'modify':
+            aciton_modify(d[1], d[2], fact_ini, vars)
+            print(fact_ini)
+        #############################################
 
 
 def extractOVAtoDict(s, vars):
@@ -86,28 +97,39 @@ def action_remove(fact, fact_ini):
         print("can't remove {}".format(fact))
 
 
-def aciton_modify(modi_varattr, fact_ini, value, vars):
+def aciton_modify(modi_varattr, new_value, fact_ini, vars):
+    # ?var:attr 変数名と対称の属性に分解
     var = re.search('\?\w+', modi_varattr).group(0)
     attr = re.search(':\w+', modi_varattr).group(0)
 
-    # 両端の括弧を削除
-    fact = re.sub('^\(|\)$', '', vars[var][0])
+    # 変数名から対称のファクトを取ってきて両端の括弧を削除
+    ori_fact = re.sub('^\(|\)$', '', vars[var][0])
 
-    mm = re.search('{}\s+([a-zA-Z0-9_()"\'?@ -]+)'.format(attr), fact)
+    # ファクトの中に変数が存在したらvarsから対応する値を代入
+    regex = re.compile('\?\w+')
+    while True:
+        var_find = regex.search(ori_fact)
+        if var_find is None:
+            break
+        else:
+            ori_fact = regex.sub(vars[var_find.group(0)][0], ori_fact, 1)
+
+    # 属性をmodify対称のファクトから検索
+    mm = re.search('{}\s+([a-zA-Z0-9_()"\'?@ -]+)'.format(attr), ori_fact)
 
     if mm is not None:
-        # 元の値のスペース, (), ?を正規表現に置き換え
+        # modify前の値のスペース, (), ?を正規表現に置き換え
         ori_value = re.sub('\s+', '.*', mm.group(1))
         ori_value = re.sub('\)', '\)', ori_value)
         ori_value = re.sub('\(', '\(', ori_value)
         ori_value = re.sub('\?', '\?', ori_value)
-        # 元の値を新しい値に置き換える
-        new_fact = re.sub(ori_value, value, vars[var][0])
+        # 新しい値に置き換える
+        new_fact = re.sub(ori_value, new_value, ori_fact)
     else:
         print("Can't modify")
 
-    fact_ini.remove(vars[var][0])
-    fact_ini.append(new_fact)
+    fact_ini.remove('({})'.format(ori_fact))
+    fact_ini.append('({})'.format(new_fact))
 
 
 if __name__ == '__main__':
