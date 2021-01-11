@@ -1,5 +1,7 @@
 import re
 
+import gc
+
 
 class Extract:
     def __init__(self, file):
@@ -38,7 +40,6 @@ class Extract:
             return fact_pro, fact_ini
 
     def rule(self):
-        x = []
         var1 = []
         joken = []
         jikko = []
@@ -53,7 +54,7 @@ class Extract:
 
             while '-->' in data:
                 # '-->'まで抽出
-                x.append(data[1:data.index('-->')])
+                joken.append(data[1:data.index('-->')])
                 # '-->'以降')'まで抽出
                 jikko.append(
                     data[(data.index('-->') + 1):data.index(')')])
@@ -73,17 +74,17 @@ class Extract:
             """
 
             # '( ) = ?○○が存在するかどうか
-            for i in range(len(x)):
+            # '( ) = ?○○'が存在したら'= ?○○'を削除して条件のリストに加える
+            for i in range(len(joken)):
                 var1.append({})
-                for s in x[i]:
-                    if regex.search(s) is not None:
-                        var1[i][regex.search(s).group(
-                            2)] = [regex.search(s).group(1)]
+                for s in range(len(joken[i])):
+                    if regex.search(joken[i][s]) is not None:
+                        var1[i][regex.search(joken[i][s]).group(
+                            2)] = [regex.search(joken[i][s]).group(1)]
+                        joken[i][s] = regex.search(joken[i][s]).group(1)
 
-            for i in x:
-                # '( ) = ?○○'が存在したら'= ?○○'を削除して条件のリストに加える
-                joken.append([regex.search(s).group(1) if regex.search(
-                    s) is not None else s for s in i])
+                # joken.append([regex.search(s).group(1) if regex.search(
+                #     s) is not None else s for s in i])
             # print('joken = ', joken)
             # print('jikko = ', jikko)
             # print('dict1 = ', dict1)
@@ -100,6 +101,8 @@ class Matching:
 
     def mat(self):
         var2 = {}
+        print(len(self.joken))
+        # for i in range(1, len(self.joken)):
         for i in range(len(self.joken)):
             var2.clear()
             for s in self.joken[i]:
@@ -128,6 +131,7 @@ class Matching:
                                     var_exist.group(1)), s, 1)
 
                         else:
+                            print()
                             break
 
                     regex2 = re.compile(':(\w+):')
@@ -174,21 +178,29 @@ class Matching:
                         match_fact_list = []
                         # propertyとマッチング
                         for pro in self.fact_pro:
+                            # print('----')
+                            # print(pro)
                             m_pro = regex.search(pro)
+
+                            # m_pro = re.search(s, pro)
                             if m_pro is not None:
                                 match_fact_list.append(pro)
                         # initial_factsとマッチング
                         for ini in self.fact_ini:
+                            # print('-- -= == == ==--')
+                            # print(ini)
                             m_ini = regex.search(ini)
+                            # m_ini = re.search(s, ini)
                             if m_ini is not None:
                                 match_fact_list.append(ini)
                         # マッチしなければbreak
-                        if not match_fact_list:
+                        if match_fact_list == []:
                             print('false')
                             break
 
                     # ファクトとマッチしたら
                     for key, value in var2.items():
+                        print('いまここやで')
                         if type(value) is not list:
                             var2[key] = []
                             regex = re.compile(
