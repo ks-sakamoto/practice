@@ -32,11 +32,7 @@ class Extract:
                     text = regex2.sub('', text, 1)
                 else:
                     break
-            # printではなくreturnさせてmainでprintさせるほうがいいっすね。byなかや
-            '''
-            print('property = ' + self.fact_pro)
-            print('initial_facts = ' + self.fact_ini)
-            '''
+
             return fact_pro, fact_ini
 
     def rule(self):
@@ -60,18 +56,8 @@ class Extract:
                     data[(data.index('-->') + 1):data.index(')')])
                 del data[:(data.index(')') + 1)]
 
-            # micropythonで使えなかった
-            # regex = re.compile('(?<=\)\s=\s)\?.+')
-            # regex2 = re.compile('^\(.*\)(?=\s*=.*)')
-
-            regex = re.compile('(^\(.*\))\s*=\s*(\?.+$)')
-
-            """
-            micropythonで使えた
-            regex = re.compile('\s+=\s+\?.+$')
-            regex2 = re.compile('^\(.*\)\s*=\s*')
-            regex3 = re.compile('^\(.*\)')
-            """
+            # regex = re.compile('(^\(.*\))\s*=\s*(\?.+$)')
+            regex = re.compile('\s*=\s*(\?\w+$)')
 
             # '( ) = ?○○が存在するかどうか
             # '( ) = ?○○'が存在したら'= ?○○'を削除して条件のリストに加える
@@ -80,14 +66,9 @@ class Extract:
                 for s in range(len(joken[i])):
                     if regex.search(joken[i][s]) is not None:
                         var1[i][regex.search(joken[i][s]).group(
-                            2)] = [regex.search(joken[i][s]).group(1)]
-                        joken[i][s] = regex.search(joken[i][s]).group(1)
+                            1)] = [regex.sub('', joken[i][s])]
+                        joken[i][s] = regex.sub('', joken[i][s])
 
-                # joken.append([regex.search(s).group(1) if regex.search(
-                #     s) is not None else s for s in i])
-            # print('joken = ', joken)
-            # print('jikko = ', jikko)
-            # print('dict1 = ', dict1)
             return joken, jikko, var1
 
 
@@ -163,15 +144,14 @@ class Matching:
                                     match_fact_list.append(ini)
                             # マッチしたらマッチした変数を残して抜ける
                             if match_fact_list:
-                                var2['?{}'.format(multi_var.group(0))].clear()
-                                var2['?{}'.format(
-                                    multi_var.group(0))].append(var)
+                                var2['?{}'.format(multi_var.group(1))] = [var]
                                 break
                         else:
                             print('false')
                             break
                     else:
                         # スペース, (), ?を正規表現に置き換え
+                        print(s)
                         s = re.sub('\s+', '.*', s)
                         s = s.replace(')', '\)')
                         s = s.replace('(', '\(')
@@ -181,17 +161,11 @@ class Matching:
                         match_fact_list = []
                         # propertyとマッチング
                         for pro in self.fact_pro:
-                            # print('----')
-                            # print(pro)
                             m_pro = regex.search(pro)
-
-                            # m_pro = re.search(s, pro)
                             if m_pro is not None:
                                 match_fact_list.append(pro)
                         # initial_factsとマッチング
                         for ini in self.fact_ini:
-                            # print('-- -= == == ==--')
-                            # print(ini)
                             m_ini = regex.search(ini)
                             if m_ini is not None:
                                 match_fact_list.append(ini)
@@ -248,15 +222,6 @@ class Matching:
                 # return dict2
                 var2.update(self.var1[i])
                 return self.jikko[i], var2
-
-    def j_jikko(self, i):
-        for s in self.jikko[i]:
-            # オブジェクトを抽出
-            regex = re.compile('\w+')
-            mm = regex.search(s)
-            with open(mm.group(0) + '.py') as f:
-                script = f.read()
-                exec(script)
 
 
 def main():

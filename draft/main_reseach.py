@@ -81,16 +81,16 @@ def main(path):
 
 def lpwa(uart, content):
 
-    print('---------')
-    uart.write(b'RDID\r\n')
+    print('----lpwa----')
+    # uart.write(b'RDID\r\n')
     utime.sleep(3)
-    msg_bytes = uart.readline()
-    print(str(msg_bytes, 'UTF-8'))
+    # msg_bytes = uart.readline()
+    # print(str(msg_bytes, 'UTF-8'))
 
-    uart.write(b'ECIO\r\n')
+    # uart.write(b'ECIO\r\n')
     utime.sleep(2)
-    msg_bytes = uart.readline()
-    print(str(msg_bytes, 'UTF-8'))
+    # msg_bytes = uart.readline()
+    # print(str(msg_bytes, 'UTF-8'))
 #     string = 'Hello World!\r\n'
 
     for k, v in content.items():
@@ -100,91 +100,31 @@ def lpwa(uart, content):
             if len('{},{}'.format(k, v)) < 32:
                 while(1):
                     print('送信文字列 key:{}, value:{}'.format(k, v))
-                    uart.write(b'TXDA {}'.format(k, v, '\r\n'))
+                    # uart.write(b'TXDA {}'.format(k, v, '\r\n'))
                     utime.sleep(3)
-                    print(str(msg_bytes, 'UTF-8'))
-                    if msg_bytes == b'OK\r\n':
-                        print('送信完了')
-                        break
-                    else:
-                        print('送信失敗')
+                    break
+                    # print(str(msg_bytes, 'UTF-8'))
+                    # if msg_bytes == b'OK\r\n':
+                    #     print('送信完了')
+                    #     break
+                    # else:
+                    #     print('送信失敗')
             else:
                 num = (len('{},{}'.format(k, v))//32) + 1
                 for i in range(num):
                     while(1):
                         print('送信文字列: {}{}'.format(
                             '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
-                        uart.write(b'TXDA {}{}'.format(
-                            '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
+                        # uart.write(b'TXDA {}{}'.format(
+                        #     '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
                         utime.sleep(3)
-                        print(str(msg_bytes, 'UTF-8'))
-                        if msg_bytes == b'OK\r\n':
-                            print('送信完了')
-                            break
-                        else:
-                            print('送信失敗')
-
-
-'''
-    for strs in joken:
-        for string in strs:
-            if(len(string) > 32):
-                num = (len(string)//32) + 1
-                for i in range(num):
-                    while(1):
-                        print('送信文字列: {}{}'.format(
-                            string[32*i:32*(i+1)], '\r\n'))
-                        uart.write(b'TXDA {}{}'.format(
-                            string[32*i:32*(i+1)], '\r\n'))
-                        utime.sleep(3)
-                        msg_bytes = uart.readline()
-                        print(str(msg_bytes, 'UTF-8'))
-                        if msg_bytes == b'OK\r\n':
-                            print('送信完了')
-                            break
-                        else:
-                            print('送信失敗')
-            else:
-                while(1):
-                    print('送信文字列: {}{}'.format(string, '\r\n'))
-                    uart.write(b'TXDA {}{}'.format(string, '\r\n'))
-                    utime.sleep(3)
-                    print(str(msg_bytes, 'UTF-8'))
-                    if msg_bytes == b'OK\r\n':
-                        print('送信完了')
                         break
-                    else:
-                        print('送信失敗')
-    # hensyu = {'?from': 'Japannnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn',
-    #           '?content': 'question'}
-    for k, v in hensyu.items():
-        if len('{},{}'.format(k, v)) < 32:
-            while(1):
-                print('送信文字列 key:{}, value:{}'.format(k, v))
-                uart.write(b'TXDA {}'.format(k, v, '\r\n'))
-                utime.sleep(3)
-                print(str(msg_bytes, 'UTF-8'))
-                if msg_bytes == b'OK\r\n':
-                    print('送信完了')
-                    break
-                else:
-                    print('送信失敗')
-        else:
-            num = (len('{},{}'.format(k, v))//32) + 1
-            for i in range(num):
-                while(1):
-                    print('送信文字列: {}{}'.format(
-                        '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
-                    uart.write(b'TXDA {}{}'.format(
-                        '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
-                    utime.sleep(3)
-                    print(str(msg_bytes, 'UTF-8'))
-                    if msg_bytes == b'OK\r\n':
-                        print('送信完了')
-                        break
-                    else:
-                        print('送信失敗')
-'''
+                        # print(str(msg_bytes, 'UTF-8'))
+                        # if msg_bytes == b'OK\r\n':
+                        #     print('送信完了')
+                        #     break
+                        # else:
+                        #     print('送信失敗')
 
 
 def extractOVAtoDict(s, vars):
@@ -285,18 +225,19 @@ def aciton_modify(modi_varattr, new_value, fact_ini, vars):
 
 def check(agent_name):
     print('hello')
-    uart = UART(2, 19200)  # 与えたボーレートで初期化
-    uart.init(baudrate=19200, bits=8, parity=None,
-              stop=1, rx=16, tx=17)  # 与えたパラメータで初期化
-    while True:
-        utime.sleep(3)
-        msg_bytes = uart.readline()
-        print(msg_bytes)
-        if msg_bytes is not None:
-            print('受信しました')
-           # if agent_name ==  :toで抜き出した名前と一致すれば。それでいいのか？
+    # uart = UART(2, 19200)  # 与えたボーレートで初期化
+    # uart.init(baudrate=19200, bits=8, parity=None,
+    #           stop=1, rx=16, tx=17)  # 与えたパラメータで初期化
+    # while True:
+    utime.sleep(3)
+    print('===check===')
+    # msg_bytes = uart.readline()
+    # print(msg_bytes)
+    # if msg_bytes is not None:
+    #     print('受信しました')
+    # if agent_name ==  :toで抜き出した名前と一致すれば。それでいいのか？
 
-        # print(str(msg_bytes, 'UTF-8'))
+    # print(str(msg_bytes, 'UTF-8'))
 
 
 if __name__ == '__main__':
