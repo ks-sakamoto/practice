@@ -44,7 +44,6 @@ def main(path):
     mch = alz.Matching(joken, jikko, fact_pro, fact_ini, var1)
     # マッチングの実行
     actions, vars = mch.mat()
-    print('actions: {0} \nvars: {1}'.format(actions, vars))
     for s in actions:
         # オブジェクトを抽出
         content = extractOVAtoDict(s, vars)
@@ -82,48 +81,48 @@ def main(path):
 
 def lpwa(uart, content):
 
-    print('----lpwa-----')
-#     uart.write(b'RDID\r\n')
-#     utime.sleep(3)
-#     msg_bytes = uart.readline()
-#     print(str(msg_bytes, 'UTF-8'))
+    print('---------')
+    uart.write(b'RDID\r\n')
+    utime.sleep(3)
+    msg_bytes = uart.readline()
+    print(str(msg_bytes, 'UTF-8'))
 
-#     uart.write(b'ECIO\r\n')
-#     utime.sleep(2)
-#     msg_bytes = uart.readline()
-#     print(str(msg_bytes, 'UTF-8'))
-# #     string = 'Hello World!\r\n'
+    uart.write(b'ECIO\r\n')
+    utime.sleep(2)
+    msg_bytes = uart.readline()
+    print(str(msg_bytes, 'UTF-8'))
+#     string = 'Hello World!\r\n'
 
-#     for k, v in content.items():
-#         if k == 'obj':
-#             pass
-#         else:
-#             if len('{},{}'.format(k, v)) < 32:
-#                 while(1):
-#                     print('送信文字列 key:{}, value:{}'.format(k, v))
-#                     uart.write(b'TXDA {}'.format(k, v, '\r\n'))
-#                     utime.sleep(3)
-#                     print(str(msg_bytes, 'UTF-8'))
-#                     if msg_bytes == b'OK\r\n':
-#                         print('送信完了')
-#                         break
-#                     else:
-#                         print('送信失敗')
-#             else:
-#                 num = (len('{},{}'.format(k, v))//32) + 1
-#                 for i in range(num):
-#                     while(1):
-#                         print('送信文字列: {}{}'.format(
-#                             '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
-#                         uart.write(b'TXDA {}{}'.format(
-#                             '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
-#                         utime.sleep(3)
-#                         print(str(msg_bytes, 'UTF-8'))
-#                         if msg_bytes == b'OK\r\n':
-#                             print('送信完了')
-#                             break
-#                         else:
-#                             print('送信失敗')
+    for k, v in content.items():
+        if k == 'obj':
+            pass
+        else:
+            if len('{},{}'.format(k, v)) < 32:
+                while(1):
+                    print('送信文字列 key:{}, value:{}'.format(k, v))
+                    uart.write(b'TXDA {}'.format(k, v, '\r\n'))
+                    utime.sleep(3)
+                    print(str(msg_bytes, 'UTF-8'))
+                    if msg_bytes == b'OK\r\n':
+                        print('送信完了')
+                        break
+                    else:
+                        print('送信失敗')
+            else:
+                num = (len('{},{}'.format(k, v))//32) + 1
+                for i in range(num):
+                    while(1):
+                        print('送信文字列: {}{}'.format(
+                            '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
+                        uart.write(b'TXDA {}{}'.format(
+                            '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
+                        utime.sleep(3)
+                        print(str(msg_bytes, 'UTF-8'))
+                        if msg_bytes == b'OK\r\n':
+                            print('送信完了')
+                            break
+                        else:
+                            print('送信失敗')
 
 
 '''
@@ -285,33 +284,34 @@ def aciton_modify(modi_varattr, new_value, fact_ini, vars):
 
 
 def check(agent_name):
-    # print('hello')
-    # uart = UART(2, 19200)  # 与えたボーレートで初期化
-    # uart.init(baudrate=19200, bits=8, parity=None,
-    #           stop=1, rx=16, tx=17)  # 与えたパラメータで初期化
-    # while True:
-    #     utime.sleep(3)
-    #     msg_bytes = uart.readline()
-    #     print(msg_bytes)
-    #     if msg_bytes is not None:
-    #         print('受信しました')
-    #        # if agent_name ==  :toで抜き出した名前と一致すれば。それでいいのか？
-
-    #     # print(str(msg_bytes, 'UTF-8'))
+    print('hello')
+    uart = UART(2, 19200)  # 与えたボーレートで初期化
+    uart.init(baudrate=19200, bits=8, parity=None,
+              stop=1, rx=16, tx=17)  # 与えたパラメータで初期化
     while True:
         utime.sleep(3)
-        print(agent_name)
+        msg_bytes = uart.readline()
+        print(msg_bytes)
+        if msg_bytes is not None:
+            print('受信しました')
+           # if agent_name ==  :toで抜き出した名前と一致すれば。それでいいのか？
+
+        # print(str(msg_bytes, 'UTF-8'))
 
 
 if __name__ == '__main__':
     path = 'Sample2.dash'
     agent_name = path[:-5]
+    # main(path)
+    # _thread.stack_size(40000)
     try:
         _thread.start_new_thread(check, (agent_name,))
+        _thread.stack_size(10000)
         _thread.start_new_thread(main, (path,))
-
-    except:
-        print("Error: unable to start thread")
+    except Exception as e:
+        print(e)
+    # except:
+    #     print("Error: unable to start thread")
 
 
 '''
