@@ -152,22 +152,36 @@ class Matching:
                     else:
                         # スペース, (), ?を正規表現に置き換え
                         print(s)
-                        s = re.sub('\s+', '.*', s)
-                        s = s.replace(')', '\)')
-                        s = s.replace('(', '\(')
-                        s = s.replace('?', '\?')
-                        regex = re.compile(s)
+                        # s = re.sub('\s+', '.*', s)
+                        # s = s.replace(')', '\)')
+                        # s = s.replace('(', '\(')
+                        # s = s.replace('?', '\?')
+                        # regex = re.compile(s)
+                        s = re.sub('^\(|\)$', '', s)
+                        s = s.split(':')
+                        for p in range(len(s)):
+                            s[p] = s[p].rstrip(' ')
 
                         match_fact_list = []
                         # propertyとマッチング
                         for pro in self.fact_pro:
-                            m_pro = regex.search(pro)
-                            if m_pro is not None:
+                            # m_pro = regex.search(pro)
+                            # if m_pro is not None:
+                            #     match_fact_list.append(pro)
+                            for p in s:
+                                if p not in pro:
+                                    break
+                            else:
                                 match_fact_list.append(pro)
                         # initial_factsとマッチング
                         for ini in self.fact_ini:
-                            m_ini = regex.search(ini)
-                            if m_ini is not None:
+                            # m_ini = regex.search(ini)
+                            # if m_ini is not None:
+                            #     match_fact_list.append(ini)
+                            for p in s:
+                                if p not in ini:
+                                    break
+                            else:
                                 match_fact_list.append(ini)
                         # マッチしなければbreak
                         if match_fact_list == []:
