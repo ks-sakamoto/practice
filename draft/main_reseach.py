@@ -47,6 +47,7 @@ def main(path):
     for s in actions:
         # オブジェクトを抽出
         content = extractOVAtoDict(s, vars)
+        print(content)
         if content['obj'] == 'send':
             # exit()
             lpwa(uart, content)
@@ -152,28 +153,32 @@ def extractOVAtoDict(s, vars):
             s = regex.sub(vars[var_find.group(0)][0], s, 1)
 
     # attr,valを抽出
-    regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9?_()"\'@ -]+)')
-    while True:
-        attr_val = regex2.search(s)
-        if attr_val is not None:
-            s = regex2.sub('', s, 1)
-            dict_ova[attr_val.group(1)] = attr_val.group(2)
-        elif re.search('^\(', s) is not None:
-            dict_ova[count] = re.search('^\(.+\)', s).group(0)
-            s = re.sub('^\(.+\)', '', s, 1)
-            count += 1
-        # modifyの場合 ?var:attr を抽出
-        elif re.search('\?\w+:\w+', s) is not None:
-            dict_ova[count] = re.search('\?\w+:\w+', s).group(0)
-            s = re.sub('\?\w+:\w+', '', s, 1)
-            count += 1
-        # modifyの場合 value を抽出
-        elif re.search('\(.+\)', s) is not None:
-            dict_ova[count] = re.search('\(.+\)', s).group(0)
-            s = re.sub('\(.+\)', '', s, 1)
-            count += 1
-        else:
-            break
+    # obj == modifyの場合 ("?fact:var1 var1")
+    if dict_ova['obj'] == 'modify':
+        dict_ova[count] = re.search('\?\w+:\w+', s).group(0)
+        s = re.sub('\?\w+:\w+', '', s, 1)
+        count += 1
+        dict_ova[count] = s
+        count += 1
+    # modify以外の場合
+    else:
+        regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9?_()"\'@ -]+)')
+        while True:
+            attr_val = regex2.search(s)
+            if attr_val is not None:
+                s = regex2.sub('', s, 1)
+                dict_ova[attr_val.group(1)] = attr_val.group(2)
+            # bindの場合"?var"が後ろに来る
+            elif re.search('\?\w+', s) is not None:
+                dict_ova[count] = re.search('\?\w+', s).group(0)
+                s = re.sub('\?\w+', '', s, 1)
+                count += 1
+            # "?var"が来ない場合->make, remove->後ろの要素が1つなので全て抜き出す
+            elif s != '':
+                dict_ova[count] = s
+                break
+            else:
+                break
     return dict_ova
 
 
@@ -247,7 +252,7 @@ if __name__ == '__main__':
     # _thread.stack_size(40000)
     try:
         _thread.start_new_thread(check, (agent_name,))
-        _thread.stack_size(10000)
+        # _thread.stack_size(10000)
         _thread.start_new_thread(main, (path,))
     except Exception as e:
         print(e)
