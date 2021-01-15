@@ -7,6 +7,11 @@ class Extract:
     def __init__(self, file):
         self.file = file
 
+    def agentname(self):
+        with open(self.file, encoding='utf=8') as f:
+            agent_name = re.search('\(agent\s*(\w+)', f.read()).group(1)
+        return agent_name
+
     def fact(self):
         fact_pro = []
         fact_ini = []
@@ -158,12 +163,15 @@ class Matching:
                         # s = s.replace('?', '\?')
                         # regex = re.compile(s)
                         s = re.sub('^\(|\)$', '', s)
+                        # 条件部を属性，属性値の組に分解
                         s = s.split(':')
                         for p in range(len(s)):
                             s[p] = s[p].rstrip(' ')
 
                         match_fact_list = []
                         # propertyとマッチング
+                        # proの中に属性，属性値の組が存在しているか確認
+                        # 条件部の全ての属性，属性値の組が存在していればマッチ
                         for pro in self.fact_pro:
                             # m_pro = regex.search(pro)
                             # if m_pro is not None:
@@ -173,7 +181,7 @@ class Matching:
                                     break
                             else:
                                 match_fact_list.append(pro)
-                        # initial_factsとマッチング
+                        # initial_factsとマッチング(propertyと同様)
                         for ini in self.fact_ini:
                             # m_ini = regex.search(ini)
                             # if m_ini is not None:
