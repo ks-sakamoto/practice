@@ -55,7 +55,7 @@ def action_move(file):
             space = space_regex.search(ori_data)
             if space is not None:
                 ori_data = space_regex.sub(
-                    '2*{}'.format(len(space.group(0))), ori_data, 1)
+                    '2*{}0'.format(len(space.group(0))), ori_data, 1)
             else:
                 break
 
