@@ -1,10 +1,10 @@
 import re
 
-d = {}
+d = {'0': '-->', '1': '==', '2': ' '}
 
 
 def action_move(file):
-    count = 0
+    count = 3
     end_index = 0
     word_regex = re.compile('[a-zA-Z_?@:"0-9]+')
     # num_regex = re.compile('[0-9.]+')
@@ -42,6 +42,19 @@ def action_move(file):
                         ori_data[end_index:], temp_data)
                     end_index = end_index + word.start() + len(str(count))
                     count += 1
+            else:
+                break
+
+        ori_data = ori_data.replace('-->', '0')
+        ori_data = ori_data.replace('==', '1')
+
+        # スペースが4つ以上連続してあった場合
+        space_regex = re.compile('\s\s\s\s+')
+        while True:
+            space = space_regex.search(ori_data)
+            if space is not None:
+                ori_data = space_regex.sub(
+                    '2*{}'.format(len(space.group(0))), ori_data, 1)
             else:
                 break
 
