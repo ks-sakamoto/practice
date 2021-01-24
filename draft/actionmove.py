@@ -50,12 +50,12 @@ def action_move(file):
         ori_data = ori_data.replace('==', '2')
 
         # スペースが4つ以上連続してあった場合
-        space_regex = re.compile('\s\s\s\s+')
+        space_regex = re.compile('    +')
         while True:
             space = space_regex.search(ori_data)
             if space is not None:
                 ori_data = space_regex.sub(
-                    '02*{}0'.format(len(space.group(0))), ori_data, 1)
+                    '2*{}'.format(len(space.group(0))), ori_data, 1)
             else:
                 break
 
