@@ -4,7 +4,7 @@ import os
 d = {0: '-->', 1: '==', 2: ' '}
 
 
-def action_move(file):
+def convert(file):
     count = 4
     end_index = 0
     word_regex = re.compile('[a-zA-Z_?@:"0-9/]+')
@@ -65,5 +65,36 @@ def action_move(file):
             fw.write(ori_data.encode())
 
 
-action_move('Sample.dash')
+def restore(file, word_dict):
+    end_index = 0
+
+    with open(file, 'r') as f:
+        ori_data = f.read()
+        # まずスペースを変換
+        space_regex = re.compile('2\*(\d)')
+        while True:
+            space = space_regex.search(ori_data)
+            if space is not None:
+                ori_data = space_regex.sub(
+                    ' ' * int(space.group(1)), ori_data, 1)
+            else:
+                break
+        # 次に辞書を参照しながら単語を復元
+        num_regex = re.compile('\d+')
+        while True:
+            num = num_regex.search(ori_data[end_index:])
+            if num is not None:
+                temp_data = num_regex.sub(
+                    word_dict[int(num.group(0))], ori_data[end_index:], 1)
+                ori_data = ori_data.replace(ori_data[end_index:], temp_data)
+                end_index = end_index + \
+                    num.start() + len(word_dict[int(num.group(0))])
+            else:
+                break
+
+        with open(file, 'w') as fw:
+            fw.write(ori_data)
+
+
+convert('Sample.dash')
 print(os.path.getsize('test.dash'))
