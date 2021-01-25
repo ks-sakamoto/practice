@@ -1,13 +1,13 @@
 import re
 import os
 
-d = {'1': '-->', '2': '==', '3': ' '}
+d = {0: '-->', 1: '==', 2: ' '}
 
 
 def action_move(file):
     count = 4
     end_index = 0
-    word_regex = re.compile('[a-zA-Z_?@:"0-9]+')
+    word_regex = re.compile('[a-zA-Z_?@:"0-9/]+')
     # num_regex = re.compile('[0-9.]+')
     with open(file, encoding='utf-8') as f:
         ori_data = f.read()
@@ -31,12 +31,12 @@ def action_move(file):
                     for k, v in d.items():
                         if v == word.group(0):
                             temp_data = word_regex.sub(
-                                k, ori_data[end_index:], 1)
+                                str(k), ori_data[end_index:], 1)
                             ori_data = ori_data.replace(
                                 ori_data[end_index:], temp_data)
-                            end_index = end_index + word.start() + len(k)
+                            end_index = end_index + word.start() + len(str(k))
                 else:
-                    d[str(count)] = word.group(0)
+                    d[count] = word.group(0)
                     temp_data = word_regex.sub(
                         str(count), ori_data[end_index:], 1)
                     ori_data = ori_data.replace(
@@ -46,8 +46,8 @@ def action_move(file):
             else:
                 break
 
-        ori_data = ori_data.replace('-->', '1')
-        ori_data = ori_data.replace('==', '2')
+        ori_data = ori_data.replace('-->', '0')
+        ori_data = ori_data.replace('==', '1')
 
         # スペースが4つ以上連続してあった場合
         space_regex = re.compile('    +')
@@ -55,7 +55,7 @@ def action_move(file):
             space = space_regex.search(ori_data)
             if space is not None:
                 ori_data = space_regex.sub(
-                    '2*{}0'.format(len(space.group(0))), ori_data, 1)
+                    '2*{}'.format(len(space.group(0))), ori_data, 1)
             else:
                 break
 
