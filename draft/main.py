@@ -4,7 +4,7 @@ import re
 def main():
     import analyze as ana
 
-    t = ana.Extract('Sample.dash')
+    t = ana.Extract('Sample2.dash')
     fact_pro, fact_ini = t.fact()
     joken, jikko, var1 = t.rule()
     print('initialfacts = {}'.format(fact_ini))
@@ -68,16 +68,25 @@ def extractOVAtoDict(s, vars):
         count += 1
         dict_ova[count] = s
         count += 1
-    # modify以外の場合
-    else:
+    # obj == sendの場合
+    elif dict_ova['obj'] == 'send':
         regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9?_()"\'@ -]+)')
         while True:
             attr_val = regex2.search(s)
             if attr_val is not None:
-                s = regex2.sub('', s, 1)
-                dict_ova[attr_val.group(1)] = attr_val.group(2)
+                if attr_val.group(1) == ':content':
+                    dict_ova[':content'] = re.search('\(.*\)', s).group(0)
+                    break
+                else:
+                    s = regex2.sub('', s, 1)
+                    dict_ova[attr_val.group(1)] = attr_val.group(2)
+            else:
+                break
+    # それ以外の場合
+    else:
+        while True:
             # bindの場合"?var"が後ろに来る
-            elif re.search('\?\w+', s) is not None:
+            if re.search('\?\w+', s) is not None:
                 dict_ova[count] = re.search('\?\w+', s).group(0)
                 s = re.sub('\?\w+', '', s, 1)
                 count += 1
