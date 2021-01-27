@@ -1,27 +1,16 @@
 import re
 import os
 
-d = {0: '-->', 1: '==', 2: ' '}
+d = {0: '-->', 1: '==', 2: ' ', 3: '!='}
 
 
 def convert(file):
     count = 4
     end_index = 0
-    word_regex = re.compile('[a-zA-Z_?@:"0-9/]+')
+    word_regex = re.compile('[a-zA-Z_?@:"0-9/.,]+')
     # num_regex = re.compile('[0-9.]+')
     with open(file, encoding='utf-8') as f:
         ori_data = f.read()
-        # 元から数字のものと置き換えたものの区別をつける
-        # まず元から数字のものに目印をつける
-        # while True:
-        #     num = num_regex.search(ori_data[end_index:])
-        #     if num is not None:
-        #         temp_data = num_regex.sub('[{}]'.format(
-        #             num.group(0)), ori_data[end_index:], 1)
-        #         ori_data = ori_data.replace(ori_data[end_index:], temp_data)
-        #         end_index = end_index + num.end() + 1
-        #     else:
-        #         break
 
         # 単語をインデックスに置き換える
         while True:
@@ -48,6 +37,16 @@ def convert(file):
 
         ori_data = ori_data.replace('-->', '0')
         ori_data = ori_data.replace('==', '1')
+        ori_data = ori_data.replace('!=', '3')
+
+        # スペースと改行しかない行は削除する
+        noword_line_regex = re.compile('\\n +\\n')
+        while True:
+            noword_line = noword_line_regex.search(ori_data)
+            if noword_line is not None:
+                ori_data = noword_line_regex.sub('\n', ori_data, 1)
+            else:
+                break
 
         # スペースが4つ以上連続してあった場合
         space_regex = re.compile('    +')
@@ -64,12 +63,14 @@ def convert(file):
         with open('test.dash', 'wb') as fw:
             fw.write(ori_data.encode())
 
+    return ori_data
+
 
 def restore(file, word_dict):
     end_index = 0
 
-    with open(file, 'r') as f:
-        ori_data = f.read()
+    with open(file, 'rb') as f:
+        ori_data = f.read().decode()
         # まずスペースを変換
         space_regex = re.compile('2\*(\d)')
         while True:
@@ -96,5 +97,5 @@ def restore(file, word_dict):
             fw.write(ori_data)
 
 
-convert('Sample.dash')
+convert('Sample2.dash')
 print(os.path.getsize('test.dash'))
