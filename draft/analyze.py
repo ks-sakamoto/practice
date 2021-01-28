@@ -17,9 +17,9 @@ class Extract:
         fact_ini = []
         with open(self.file, encoding='utf-8') as f:
             data = f.read()
-            regex = re.compile('\(property.*?\r\n\s*((\(.*?\)\r\n\s*)*)')
+            regex = re.compile('\(property.*?\n\s*((\(.*?\)\n\s*)*)')
             text = regex.search(data).group(1)
-            regex2 = re.compile('(\(.*?\))\r\n')
+            regex2 = re.compile('(\(.*?\))\n')
             while True:
                 pro_exist = regex2.search(text)
                 if pro_exist is not None:
@@ -28,7 +28,7 @@ class Extract:
                 else:
                     break
 
-            regex = re.compile('\(initial_facts.*?\r\n\s*((\(.*?\)\r\n\s*)*)')
+            regex = re.compile('\(initial_facts.*?\n\s*((\(.*?\)\n\s*)*)')
             text = regex.search(data).group(1)
             while True:
                 ini_exist = regex2.search(text)
@@ -90,10 +90,7 @@ class Matching:
         # for i in range(1, len(self.joken)):
         for i in range(len(self.joken)):
             var2.clear()
-            print('iは')
-            print(i)
-            print('self.joken[i]は')
-            print(self.joken[i])
+
             for s in self.joken[i]:
                 # 比較演算子が存在しなかった場合
                 if re.search('==|!=|>|>=|<|<=', s) is None:
@@ -198,7 +195,7 @@ class Matching:
 
                     # ファクトとマッチしたら
                     for key, value in var2.items():
-                        print('いまここやで')
+
                         if type(value) is not list:
                             var2[key] = []
                             regex = re.compile(
