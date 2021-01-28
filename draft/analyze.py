@@ -17,9 +17,9 @@ class Extract:
         fact_ini = []
         with open(self.file, encoding='utf-8') as f:
             data = f.read()
-            regex = re.compile('\(property.*?\n\s*((\(.*?\)\n\s*)*)')
+            regex = re.compile('\(property.*?\r\n\s*((\(.*?\)\r\n\s*)*)')
             text = regex.search(data).group(1)
-            regex2 = re.compile('(\(.*?\))\n')
+            regex2 = re.compile('(\(.*?\))\r\n')
             while True:
                 pro_exist = regex2.search(text)
                 if pro_exist is not None:
@@ -28,7 +28,7 @@ class Extract:
                 else:
                     break
 
-            regex = re.compile('\(initial_facts.*?\n\s*((\(.*?\)\n\s*)*)')
+            regex = re.compile('\(initial_facts.*?\r\n\s*((\(.*?\)\r\n\s*)*)')
             text = regex.search(data).group(1)
             while True:
                 ini_exist = regex2.search(text)
@@ -37,7 +37,7 @@ class Extract:
                     text = regex2.sub('', text, 1)
                 else:
                     break
-
+            # printではなくreturnさせてmainでprintさせるほうがいいっすね。byなかや
             return fact_pro, fact_ini
 
     def rule(self):
@@ -61,8 +61,19 @@ class Extract:
                     data[(data.index('-->') + 1):data.index(')')])
                 del data[:(data.index(')') + 1)]
 
+            # micropythonで使えなかった
+            # regex = re.compile('(?<=\)\s=\s)\?.+')
+            # regex2 = re.compile('^\(.*\)(?=\s*=.*)')
+
             # regex = re.compile('(^\(.*\))\s*=\s*(\?.+$)')
             regex = re.compile('\s*=\s*(\?\w+$)')
+
+            """
+            micropythonで使えた
+            regex = re.compile('\s+=\s+\?.+$')
+            regex2 = re.compile('^\(.*\)\s*=\s*')
+            regex3 = re.compile('^\(.*\)')
+            """
 
             # '( ) = ?○○が存在するかどうか
             # '( ) = ?○○'が存在したら'= ?○○'を削除して条件のリストに加える
@@ -90,7 +101,10 @@ class Matching:
         # for i in range(1, len(self.joken)):
         for i in range(len(self.joken)):
             var2.clear()
-
+            print('iは')
+            print(i)
+            print('self.joken[i]は')
+            print(self.joken[i])
             for s in self.joken[i]:
                 # 比較演算子が存在しなかった場合
                 if re.search('==|!=|>|>=|<|<=', s) is None:
@@ -126,23 +140,34 @@ class Matching:
                         for var in var2['?{}'.format(multi_var.group(1))]:
                             s_copy = regex2.sub(var, s, 1)
 
-                            # スペース, (), ?を正規表現に置き換え
-                            s_copy = re.sub('\s+', '.*', s_copy)
-                            s_copy = s_copy.replace(')', '\)')
-                            s_copy = s_copy.replace('(', '\(')
-                            s_copy = s_copy.replace('?', '\?')
-                            regex = re.compile(s_copy)
+                            # 両端の（）を削除
+                            s_copy = re.sub('^\(|\)$', '', s_copy)
+                            # 条件部を属性，属性値のペアに分解
+                            attr_val_pairs = s_copy.split(':')
+                            for p in range(len(attr_val_pairs)):
+                                attr_val_pairs[p] = attr_val_pairs[p].rstrip(
+                                    ' ')
 
                             match_fact_list = []
                             # propertyとマッチング
                             for pro in self.fact_pro:
-                                m_pro = regex.search(pro)
-                                if m_pro is not None:
+                                # m_pro = regex.search(pro)
+                                # if m_pro is not None:
+                                #     match_fact_list.append(pro)
+                                for pair in attr_val_pairs:
+                                    if pair not in pro:
+                                        break
+                                else:
                                     match_fact_list.append(pro)
                             # initial_factsとマッチング
                             for ini in self.fact_ini:
-                                m_ini = regex.search(ini)
-                                if m_ini is not None:
+                                # m_ini = regex.search(ini)
+                                # if m_ini is not None:
+                                #     match_fact_list.append(ini)
+                                for pair in attr_val_pairs:
+                                    if pair not in ini:
+                                        break
+                                else:
                                     match_fact_list.append(ini)
                             # マッチしたらマッチした変数を残して抜ける
                             if match_fact_list:
@@ -152,29 +177,23 @@ class Matching:
                             print('false')
                             break
                     else:
-                        # スペース, (), ?を正規表現に置き換え
-                        print(s)
-                        # s = re.sub('\s+', '.*', s)
-                        # s = s.replace(')', '\)')
-                        # s = s.replace('(', '\(')
-                        # s = s.replace('?', '\?')
-                        # regex = re.compile(s)
+                        # 両端の（）を削除
                         s = re.sub('^\(|\)$', '', s)
-                        # 条件部を属性，属性値の組に分解
-                        s = s.split(':')
-                        for p in range(len(s)):
-                            s[p] = s[p].rstrip(' ')
+                        # 条件部を属性，属性値のペアに分解
+                        attr_val_pairs = s.split(':')
+                        for p in range(len(attr_val_pairs)):
+                            attr_val_pairs[p] = attr_val_pairs[p].rstrip(' ')
 
                         match_fact_list = []
                         # propertyとマッチング
-                        # proの中に属性，属性値の組が存在しているか確認
-                        # 条件部の全ての属性，属性値の組が存在していればマッチ
+                        # proの中に属性，属性値のペアが存在しているか確認
+                        # 条件部の全ての属性，属性値のペアが存在していればマッチ
                         for pro in self.fact_pro:
                             # m_pro = regex.search(pro)
                             # if m_pro is not None:
                             #     match_fact_list.append(pro)
-                            for p in s:
-                                if p not in pro:
+                            for pair in attr_val_pairs:
+                                if pair not in pro:
                                     break
                             else:
                                 match_fact_list.append(pro)
@@ -183,8 +202,8 @@ class Matching:
                             # m_ini = regex.search(ini)
                             # if m_ini is not None:
                             #     match_fact_list.append(ini)
-                            for p in s:
-                                if p not in ini:
+                            for pair in attr_val_pairs:
+                                if pair not in ini:
                                     break
                             else:
                                 match_fact_list.append(ini)
@@ -195,7 +214,7 @@ class Matching:
 
                     # ファクトとマッチしたら
                     for key, value in var2.items():
-
+                        print('いまここやで')
                         if type(value) is not list:
                             var2[key] = []
                             regex = re.compile(
