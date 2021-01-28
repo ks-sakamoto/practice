@@ -5,6 +5,8 @@ from machine import UART
 import utime
 import gc
 import _thread
+import dht
+import machine
 
 
 def main(path, main_lock):
@@ -21,12 +23,15 @@ def main(path, main_lock):
     ext = alz.Extract(path)
     # ファクトの抽出
     fact_pro, fact_ini = ext.fact()
+
+    global agent_name
     agent_name = ext.agentname()
 
     # micropython.mem_info()
 
     print("fact_pro: {0}, \nfact_ini: {1}\nagent_name: {2}".format(
         fact_pro, fact_ini, agent_name))
+
     print('===============')
     gc.collect()
     print('Func run free: {} allocated: {}'.format(
@@ -35,6 +40,7 @@ def main(path, main_lock):
 
     # ルールの抽出
     joken, jikko, var1 = ext.rule()
+
     print("joken: {0}, \njikko: {1}, \nvar1: {2}".format(
         joken, jikko, var1))
     print('===============')
@@ -46,12 +52,104 @@ def main(path, main_lock):
     mch = alz.Matching(joken, jikko, fact_pro, fact_ini, var1)
     # マッチングの実行
     actions, vars = mch.mat()
+    print('actionsは')
+    print(actions)
     for s in actions:
         # オブジェクトを抽出
-        content = extractOVAtoDict(s, vars)
+        content = extractOAVtoDict(s, vars)
+        print('contentは')
+        print(content)
+
         if content['obj'] == 'send':
+            print(content[':content'])
+            sendcontent = extractOAVtoDict(content[':content'], vars)
+            print(sendcontent)
+            '''
+            坂本くん向けメモ
+            print(sendcontent)
+            ->
+            いまは、{'obj': 'temp', 1: ':unit degree :value 27'}となっていて、
+            これを、{'obj': 'temp', 1: ':unit':'degree', ':value' : '27'}としたい
+ 
+            '''
+
+            '''
+            なかや用メモ
+            pre_content = {}
+            
+            ◎TODO 順番をソートして、そして送信先とかに順番でkeyをリストで保存しておく, valueとかが1とか2みたいな数字ですむように
+        
+
+            sendcontent =extractOAVtoDict(content[':content'], vars)
+            pre_sendcontent =extractOAVtoDict(pre_content[:content[':to']+content[':performative']], vars)
+
+            ◎TODO content[':content']の要素数が異なっていれば、新規と判定してすべて送信する。
+            ◎TODO pre_contentが空でも全部送信
+            ◎TODO それ以外は、違っている部分だけ送る。
+            
+            i = 0
+            for k in keyのリスト:
+                if sendcontent[i] != pre_sendcontent[i] :
+                    iとsendcontent[i]を送信
+                i+=1
+
+            #ここは毎回必ず実行。初回でも。
+            pre_content[:content[':to']+content[':performative']] = content[':content']
+
+            
+            '''
+            print('sendだよ')
+
             # exit()
             lpwa(uart, content, main_lock)
+        if content['obj'] == 'control':
+            # aaaa = "heel"
+            # print(locals())
+            ret = {}
+            # exec('print(aaaa);d="unchi"', {'aaaa': aaaa}, ret)
+            # exec('print(fact_ini)',{'fact_ini': fact_ini}, ret)
+            # exec('print(aaaa)',locals(),locals())
+            # print('controlだよ')
+            # print(content['1'])
+            # print(content[1][2:])
+            # aaa = content[1][2:]
+            # aaa ='print("Hello, world")'
+            # print(fact_ini)
+            # aaa = 'action_make( "(data {})".format(exec("d = dht.DHT11(machine.Pin(26));d.measure();d.temperature()",{"d":d})),fact_ini)'
+            # aaa = 'action_make( "data"+ exec("d = dht.DHT11(machine.Pin(26));d.measure();d.temperature()"),fact_ini)'
+            # tempval = {}
+
+            '''
+            aaaaa = "d = dht.DHT11(machine.Pin(26));d.measure();action_make('(data {})'.format(d.temperature()),fact_ini)"
+            exec(aaaaa,{"dht":dht, "machine":machine,"action_make":action_make,"fact_ini": fact_ini})
+            '''
+
+            # action_make( "data"+ exec("d = dht.DHT11(machine.Pin(26));d.measure();d.temperature()",globals(),globals()),fact_ini)
+            # print(type(content[1][2:]))
+            # print(content[1][2:])
+            # exec(aaaaa)
+            '''
+            Traceback (most recent call last):
+            File "main.py", line 86, in main
+            File "<string>", line 1, in <module>
+            NameError: name 'fact_ini' isn't defined
+            '''
+
+            print(content[1][1:-1])
+            '''
+            content[1][2:]はaaaaaと同じはずなのに、通ってしまう
+            '''
+            # print(type(aaaaa))
+            # print(content[1][2:])
+            # print(aaaaa)
+            # print(aaaaa == content[1][2:])
+            '''
+            falseになる
+            '''
+
+            exec(content[1][1:-1], {"dht": dht, "machine": machine,
+                                    "action_make": action_make, "fact_ini": fact_ini}, ret)
+            print(ret)
 
             '''
             アクション実行, ここでfact_iniが書き換わる可能性あり。
@@ -77,9 +175,9 @@ def main(path, main_lock):
     print('Func run free: {} allocated: {}'.format(
         gc.mem_free(), gc.mem_alloc()))
 
-    while True:
-        utime.sleep(3)
-        print('========mainだよ=======')
+    # while True:
+    #     utime.sleep(3)
+    #     print('========mainだよ=======')
 
 
 def read_status_block(main_lock):
@@ -106,10 +204,10 @@ def lpwa(uart, content, main_lock):
     # print(status)
 
     print('---------')
-    # uart.write(b'ECIO\r\n')
-    # print('ECIOは')
-    # status = read_status_block(main_lock)
-    # print(str(status, 'UTF-8'))
+    uart.write(b'ECIO\r\n')
+    print('ECIOは')
+    status = read_status_block(main_lock)
+    print(str(status, 'UTF-8'))
     print(content)
     for k, v in content.items():
         utime.sleep(3)
@@ -120,33 +218,31 @@ def lpwa(uart, content, main_lock):
             if len('{},{}'.format(k, v)) < 32:
                 while(1):
                     print('送信文字列 key:{}, value:{}'.format(k, v))
-                    break
-                    # uart.write(b'TXDA {}{}{}'.format(k, v, '\r\n'))
-                    # # utime.sleep(3)
-                    # status = read_status_block(main_lock)
-                    # print(status)
-                    # if status == b'OK\r\n':
-                    #     print('送信完了')
-                    #     break
-                    # else:
-                    #     print('送信失敗')
+                    uart.write(b'TXDA {}{}{}'.format(k, v, '\r\n'))
+                    # utime.sleep(3)
+                    status = read_status_block(main_lock)
+                    print(status)
+                    if status == b'OK\r\n':
+                        print('送信完了')
+                        break
+                    else:
+                        print('送信失敗')
             else:
                 num = (len('{},{}'.format(k, v))//32) + 1
                 for i in range(num):
                     while(1):
                         print('送信文字列: {}{}'.format(
                             '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
-                        break
-                        # uart.write(b'TXDA {}{}'.format(
-                        #     '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
-                        # # utime.sleep(3)
-                        # status = read_status_block(main_lock)
-                        # print(str(status, 'UTF-8'))
-                        # if status == b'OK\r\n':
-                        #     print('送信完了')
-                        #     break
-                        # else:
-                        #     print('送信失敗')
+                        uart.write(b'TXDA {}{}'.format(
+                            '{},{}'.format(k, v)[32*i:32*(i+1)], '\r\n'))
+                        # utime.sleep(3)
+                        status = read_status_block(main_lock)
+                        print(str(status, 'UTF-8'))
+                        if status == b'OK\r\n':
+                            print('送信完了')
+                            break
+                        else:
+                            print('送信失敗')
 
 
 '''
@@ -211,7 +307,7 @@ def lpwa(uart, content, main_lock):
 '''
 
 
-def extractOVAtoDict(s, vars):
+def extractOAVtoDict(s, vars):
     dict_ova = {}
     count = 1
 
@@ -219,8 +315,8 @@ def extractOVAtoDict(s, vars):
     s = re.sub('^\(|\)$', '', s)
 
     # objを抽出
-    regex = re.compile('\w+')
-    obj = regex.search(s)
+    obj_regex = re.compile('\w+')
+    obj = obj_regex.search(s)
     dict_ova['obj'] = obj.group(0)
     s = re.sub('\w+\s+', '', s, 1)
 
@@ -242,18 +338,43 @@ def extractOVAtoDict(s, vars):
         s = re.sub('\?\w+:\w+', '', s, 1)
         count += 1
         dict_ova[count] = s
-    # modify以外の場合
+        count += 1
+    # # obj == sendの場合
+    # elif dict_ova['obj'] == 'send':
+    #     regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9?_()"\'@ -]+)')
+    #     while True:
+    #         attr_val = regex2.search(s)
+    #         if attr_val is not None:
+    #             if attr_val.group(1) == ':content':
+    #                 s = re.sub(':content\s+', '', s)
+    #                 dict_ova[':content'] = s
+    #                 break
+    #             else:
+    #                 s = regex2.sub('', s, 1)
+    #                 dict_ova[attr_val.group(1)] = attr_val.group(2)
+    #         else:
+    #             break
+    # それ以外の場合
     else:
-        regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9?_()"\'@ -]+)')
+        regex2 = re.compile('^(:\w+)\s+([a-zA-Z0-9?_()"\'.@ -]+)')
         while True:
             attr_val = regex2.search(s)
             if attr_val is not None:
-                s = regex2.sub('', s, 1)
-                dict_ova[attr_val.group(1)] = attr_val.group(2)
+                if attr_val.group(1) == ':content':
+                    content_regex = re.compile(':content\s+(\(.*\))')
+                    if content_regex.search(s) is None:
+                        s = regex2.sub('', s, 1)
+                        dict_ova[attr_val.group(1)] = attr_val.group(2)
+                    else:
+                        dict_ova[':content'] = content_regex.search(s).group(1)
+                        s = content_regex.sub('', s, 1)
+                else:
+                    s = regex2.sub('', s, 1)
+                    dict_ova[attr_val.group(1)] = attr_val.group(2)
             # bindの場合"?var"が後ろに来る
-            elif re.search('\?\w+', s) is not None:
-                dict_ova[count] = re.search('\?\w+', s).group(0)
-                s = re.sub('\?\w+', '', s, 1)
+            elif regex.search(s) is not None:
+                dict_ova[count] = regex.search(s).group(0)
+                s = regex.sub('', s, 1)
                 count += 1
             # "?var"が来ない場合->make, remove->後ろの要素が1つなので全て抜き出す
             elif s != '':
@@ -265,7 +386,12 @@ def extractOVAtoDict(s, vars):
 
 
 def action_make(fact, fact_ini):
+    print(fact)
+    print(fact_ini)
+    print('=====')
     fact_ini.append(fact)
+    print(fact_ini)
+    print('added')
 
 
 def action_remove(fact, fact_ini):
@@ -311,35 +437,34 @@ def aciton_modify(modi_varattr, new_value, fact_ini, vars):
     fact_ini.append('({})'.format(new_fact))
 
 
-def check(agent_name, main_lock):
+def check(main_lock):
     global status_que
     global receive_que
+    global agent_name
+    uart = UART(2, 19200)  # 与えたボーレートで初期化
+    uart.init(baudrate=19200, bits=8, parity=None,
+              stop=1, rx=16, tx=17)  # 与えたパラメータで初期化
 
-    # uart = UART(2, 19200)  # 与えたボーレートで初期化
-    # uart.init(baudrate=19200, bits=8, parity=None,
-    #           stop=1, rx=16, tx=17)  # 与えたパラメータで初期化
+    # while True:
+    #     utime.sleep(5)
+    #     msg_bytes = uart.readline()
+    #     print('checkでのreadは')
+    #     print(msg_bytes)
+    #     if msg_bytes is not None:
+    #         if msg_bytes == b'OK\r\n' or msg_bytes == b'NG\r\n':
+    #             with main_lock:
+    #                 print('status queにappendしたよ')
+    #                 status_que.append(msg_bytes)
+    #         else:
+    #             with main_lock:
+    #                 receive_que.append(msg_bytes)
+    #                 print('メッセージを受信しました')
+    #                 message = receive_que.pop(0)
+    #                 print(message)
 
-    while True:
-        utime.sleep(5)
-        print('===check===')
-        # msg_bytes = uart.readline()
-        # print('checkでのreadは')
-        # print(msg_bytes)
-        # if msg_bytes is not None:
-        #     if msg_bytes == b'OK\r\n' or msg_bytes == b'NG\r\n':
-        #         with main_lock:
-        #             print('status queにappendしたよ')
-        #             status_que.append(msg_bytes)
-        #     else:
-        #         with main_lock:
-        #             receive_que.append(msg_bytes)
-        #             print('メッセージを受信しました')
-        #             message = receive_que.pop(0)
-        #             print(message)
-
-        #             print(agent_name)
-        #             if agent_name == 'Sample2':
-        #                 print('agent nameはSample2')
+    #                 print(agent_name)
+    #                 if agent_name == 'Sample2':
+    #                     print('agent nameはSample2')
 
 
 if __name__ == '__main__':
@@ -348,7 +473,7 @@ if __name__ == '__main__':
     with open('Sample2.dash', encoding='utf-8') as f:
         data = f.readline()
         # regex = re.split('\(agent ', data)[1]
-    agent_name = data[7:-1]
+    agent_name = ''
     print('agent_name')
     print(agent_name)
     utime.sleep(1)
@@ -358,7 +483,7 @@ if __name__ == '__main__':
 
     try:
         main_lock = _thread.allocate_lock()
-        _thread.start_new_thread(check, (agent_name, main_lock, ))
+        _thread.start_new_thread(check, (main_lock, ))
         # _thread.stack_size(10000)
         _thread.start_new_thread(main, (path, main_lock,))
     except Exception as e:
