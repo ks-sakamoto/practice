@@ -23,6 +23,7 @@ def main(path, main_lock):
     ext = alz.Extract(path)
     # ファクトの抽出
     fact_pro, fact_ini = ext.fact()
+    WorkingMemory = [fact_ini.copy(), fact_pro.copy]
 
     global agent_name
     agent_name = ext.agentname()
@@ -39,17 +40,17 @@ def main(path, main_lock):
     print('===============')
 
     # ルールの抽出
-    joken, jikko, var1 = ext.rule()
+    joken, jikko = ext.rule()
 
-    print("joken: {0}, \njikko: {1}, \nvar1: {2}".format(
-        joken, jikko, var1))
+    print("joken: {0}, \njikko: {1}".format(
+        joken, jikko))
     print('===============')
     gc.collect()
     print('Func run free: {} allocated: {}'.format(
         gc.mem_free(), gc.mem_alloc()))
     print('===============')
 
-    mch = alz.Matching(joken, jikko, fact_pro, fact_ini, var1)
+    mch = alz.Matching(joken, jikko, WorkingMemory)
     # マッチングの実行
     actions, vars = mch.mat()
     print('actionsは')
@@ -385,23 +386,23 @@ def extractOAVtoDict(s, vars):
     return dict_ova
 
 
-def action_make(fact, fact_ini):
+def action_make(fact, WorkingMemory):
     print(fact)
-    print(fact_ini)
+    print(WorkingMemory)
     print('=====')
-    fact_ini.append(fact)
-    print(fact_ini)
+    WorkingMemory[0].append(fact)
+    print(WorkingMemory)
     print('added')
 
 
-def action_remove(fact, fact_ini):
-    if fact in fact_ini:
-        fact_ini.remove(fact)
+def action_remove(fact, WorkingMemory):
+    if fact in WorkingMemory[0]:
+        WorkingMemory[0].remove(fact)
     else:
         print("can't remove {}".format(fact))
 
 
-def aciton_modify(modi_varattr, new_value, fact_ini, vars):
+def aciton_modify(modi_varattr, new_value, WorkingMemory, vars):
     # ?var:attr 変数名と対称の属性に分解
     var = re.search('\?\w+', modi_varattr).group(0)
     attr = re.search(':\w+', modi_varattr).group(0)
@@ -433,8 +434,8 @@ def aciton_modify(modi_varattr, new_value, fact_ini, vars):
         new_fact = ''
         print("Can't modify")
 
-    fact_ini.remove('({})'.format(ori_fact))
-    fact_ini.append('({})'.format(new_fact))
+    WorkingMemory[0].remove('({})'.format(ori_fact))
+    WorkingMemory[0].append('({})'.format(new_fact))
 
 
 def check(main_lock):
