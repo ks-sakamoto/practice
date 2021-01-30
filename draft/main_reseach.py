@@ -23,15 +23,15 @@ def main(path, main_lock):
     ext = alz.Extract(path)
     # ファクトの抽出
     fact_pro, fact_ini = ext.fact()
-    WorkingMemory = [fact_ini.copy(), fact_pro.copy]
+    WorkingMemory = [fact_ini.copy(), fact_pro.copy()]
 
     global agent_name
     agent_name = ext.agentname()
 
     # micropython.mem_info()
 
-    print("fact_pro: {0}, \nfact_ini: {1}\nagent_name: {2}".format(
-        fact_pro, fact_ini, agent_name))
+    # print("fact_pro: {0}, \nfact_ini: {1}\nagent_name: {2}".format(
+    #     fact_pro, fact_ini, agent_name))
 
     print('===============')
     gc.collect()
@@ -42,8 +42,8 @@ def main(path, main_lock):
     # ルールの抽出
     joken, jikko = ext.rule()
 
-    print("joken: {0}, \njikko: {1}".format(
-        joken, jikko))
+    # print("joken: {0}, \njikko: {1}, \nvar1: {2}".format(
+    #     joken, jikko, var1))
     print('===============')
     gc.collect()
     print('Func run free: {} allocated: {}'.format(
@@ -52,124 +52,88 @@ def main(path, main_lock):
 
     mch = alz.Matching(joken, jikko, WorkingMemory)
     # マッチングの実行
-    actions, vars = mch.mat()
-    print('actionsは')
-    print(actions)
-    for s in actions:
-        # オブジェクトを抽出
-        content = extractOAVtoDict(s, vars)
-        print('contentは')
-        print(content)
+    for actions_vars_tuple in mch.mat():
+        actions, vars = actions_vars_tuple
+        # print('最初のvarは')
+        # print(vars)
+        # print('actionsは')
+        # print(actions)
+        for s in actions:
+            # オブジェクトを抽出
+            content = extractOAVtoDict(s, vars)
+            # print('contentは')
+            # print(content)
 
-        if content['obj'] == 'send':
-            print(content[':content'])
-            sendcontent = extractOAVtoDict(content[':content'], vars)
-            print(sendcontent)
-            '''
-            坂本くん向けメモ
-            print(sendcontent)
-            ->
-            いまは、{'obj': 'temp', 1: ':unit degree :value 27'}となっていて、
-            これを、{'obj': 'temp', 1: ':unit':'degree', ':value' : '27'}としたい
- 
-            '''
+            if content['obj'] == 'send':
 
-            '''
-            なかや用メモ
-            pre_content = {}
+                sendcontent = extractOAVtoDict(content.pop(':content'), vars)
+                contentdic = content.copy()
+                for k, v in contentdic.items():
+                    if k != 'obj':
+                        text = {}
+                        text[k] = v
+                        lpwa(uart, text, main_lock)
+
+                lpwa(uart, sendcontent, main_lock)
+
+                '''
+                なかや用メモ
+                pre_content = {}
+                
+                ◎TODO 順番をソートして、そして送信先とかに順番でkeyをリストで保存しておく, valueとかが1とか2みたいな数字ですむように
             
-            ◎TODO 順番をソートして、そして送信先とかに順番でkeyをリストで保存しておく, valueとかが1とか2みたいな数字ですむように
-        
 
-            sendcontent =extractOAVtoDict(content[':content'], vars)
-            pre_sendcontent =extractOAVtoDict(pre_content[:content[':to']+content[':performative']], vars)
+                sendcontent =extractOAVtoDict(content[':content'], vars)
+                pre_sendcontent =extractOAVtoDict(pre_content[:content[':to']+content[':performative']], vars)
 
-            ◎TODO content[':content']の要素数が異なっていれば、新規と判定してすべて送信する。
-            ◎TODO pre_contentが空でも全部送信
-            ◎TODO それ以外は、違っている部分だけ送る。
-            
-            i = 0
-            for k in keyのリスト:
-                if sendcontent[i] != pre_sendcontent[i] :
-                    iとsendcontent[i]を送信
-                i+=1
+                ◎TODO content[':content']の要素数が異なっていれば、新規と判定してすべて送信する。
+                ◎TODO pre_contentが空でも全部送信
+                ◎TODO それ以外は、違っている部分だけ送る。
+                
+                i = 0
+                for k in keyのリスト:
+                    if sendcontent[i] != pre_sendcontent[i] :
+                        iとsendcontent[i]を送信
+                    i+=1
 
-            #ここは毎回必ず実行。初回でも。
-            pre_content[:content[':to']+content[':performative']] = content[':content']
+                # ここは毎回必ず実行。初回でも。
+                pre_content[:content[':to']+content[':performative']] = content[':content']
 
-            
-            '''
-            print('sendだよ')
+                
+                '''
 
-            # exit()
-            lpwa(uart, content, main_lock)
-        if content['obj'] == 'control':
-            # aaaa = "heel"
-            # print(locals())
-            ret = {}
-            # exec('print(aaaa);d="unchi"', {'aaaa': aaaa}, ret)
-            # exec('print(fact_ini)',{'fact_ini': fact_ini}, ret)
-            # exec('print(aaaa)',locals(),locals())
-            # print('controlだよ')
-            # print(content['1'])
-            # print(content[1][2:])
-            # aaa = content[1][2:]
-            # aaa ='print("Hello, world")'
-            # print(fact_ini)
-            # aaa = 'action_make( "(data {})".format(exec("d = dht.DHT11(machine.Pin(26));d.measure();d.temperature()",{"d":d})),fact_ini)'
-            # aaa = 'action_make( "data"+ exec("d = dht.DHT11(machine.Pin(26));d.measure();d.temperature()"),fact_ini)'
-            # tempval = {}
+                # exit()
 
-            '''
-            aaaaa = "d = dht.DHT11(machine.Pin(26));d.measure();action_make('(data {})'.format(d.temperature()),fact_ini)"
-            exec(aaaaa,{"dht":dht, "machine":machine,"action_make":action_make,"fact_ini": fact_ini})
-            '''
+            if content['obj'] == 'control':
+                ret = {}
 
-            # action_make( "data"+ exec("d = dht.DHT11(machine.Pin(26));d.measure();d.temperature()",globals(),globals()),fact_ini)
-            # print(type(content[1][2:]))
-            # print(content[1][2:])
-            # exec(aaaaa)
-            '''
-            Traceback (most recent call last):
-            File "main.py", line 86, in main
-            File "<string>", line 1, in <module>
-            NameError: name 'fact_ini' isn't defined
-            '''
+                # print(content[1][1:-1])
+                exec(content[1][1:-1], {"dht": dht, "machine": machine,
+                                        "action_make": action_make, "add_vars": add_vars, "fact_ini": fact_ini, "vars": vars}, ret)
+                # print(ret)
 
-            print(content[1][1:-1])
-            '''
-            content[1][2:]はaaaaaと同じはずなのに、通ってしまう
-            '''
-            # print(type(aaaaa))
-            # print(content[1][2:])
-            # print(aaaaa)
-            # print(aaaaa == content[1][2:])
-            '''
-            falseになる
-            '''
+                '''
+                アクション実行, ここでfact_iniが書き換わる可能性あり。
+                sendをやって、できたら受信部分
+                var2は変数のリスト
 
-            exec(content[1][1:-1], {"dht": dht, "machine": machine,
-                                    "action_make": action_make, "fact_ini": fact_ini}, ret)
-            print(ret)
+                content[“:obj:”] -> “send”
+                content[“:performative”] -> “tell”
+                content[“:content”] -> “(abc 変数v1の中身)”
+                '''
 
-            '''
-            アクション実行, ここでfact_iniが書き換わる可能性あり。
-            sendをやって、できたら受信部分
-            var2は変数のリスト
+            if content['obj'] == 'move':
+                print('moveだよ')
+                print('system_dic = {}'.format(system_dic))
 
-            content[“:obj:”] -> “send”
-            content[“:performative”] -> “tell”
-            content[“:content”] -> “(abc 変数v1の中身)”
-            '''
-
-    # print("hensyu: {}".format(hensyu))
-    # print('===============')
-    # gc.collect()
-    # print('Func run free: {} allocated: {}'.format(
-    #     gc.mem_free(), gc.mem_alloc()))
-    # print('===============')
-    # 送信部分 重いので一旦コメントアウト
-    # lpwa(uart, joken, hensyu)
+        # print("hensyu: {}".format(hensyu))
+        # print('===============')
+        # gc.collect()
+        # print('Func run free: {} allocated: {}'.format(
+        #     gc.mem_free(), gc.mem_alloc()))
+        # print('===============')
+        # 送信部分 重いので一旦コメントアウト
+        # lpwa(uart, joken, hensyu)
 
     print('=======終了========')
     gc.collect()
@@ -181,6 +145,11 @@ def main(path, main_lock):
     #     print('========mainだよ=======')
 
 
+def add_vars(text, value, vars):
+    key = '?'+text
+    vars[key] = [value]
+
+
 def read_status_block(main_lock):
     while(1):
         global status_que
@@ -190,7 +159,7 @@ def read_status_block(main_lock):
             else:
                 pass
 
-        utime.sleep(3)
+        utime.sleep(2)
 
 
 def lpwa(uart, content, main_lock):
@@ -206,13 +175,13 @@ def lpwa(uart, content, main_lock):
 
     print('---------')
     uart.write(b'ECIO\r\n')
-    print('ECIOは')
+    # print('ECIOは')
     status = read_status_block(main_lock)
-    print(str(status, 'UTF-8'))
-    print(content)
+    # print(str(status, 'UTF-8'))
+    # print(content)
     for k, v in content.items():
-        utime.sleep(3)
-        print('いまは key:{}, value:{}'.format(k, v))
+        utime.sleep(1)
+        # print('いまは key:{}, value:{}'.format(k, v))
         if k == 'obj':
             pass
         else:
@@ -386,12 +355,15 @@ def extractOAVtoDict(s, vars):
     return dict_ova
 
 
-def action_make(fact, WorkingMemory):
-    print(fact)
-    print(WorkingMemory)
+def action_make(fact, WorkingMemory, vars):
+    # print(fact)
+    # print(WorkingMemory)
     print('=====')
+    # TODO
+    # varsへのappendとかをcontorlのなかでやるとか
+
     WorkingMemory[0].append(fact)
-    print(WorkingMemory)
+    # print(WorkingMemory)
     print('added')
 
 
@@ -446,26 +418,26 @@ def check(main_lock):
     uart.init(baudrate=19200, bits=8, parity=None,
               stop=1, rx=16, tx=17)  # 与えたパラメータで初期化
 
-    # while True:
-    #     utime.sleep(5)
-    #     msg_bytes = uart.readline()
-    #     print('checkでのreadは')
-    #     print(msg_bytes)
-    #     if msg_bytes is not None:
-    #         if msg_bytes == b'OK\r\n' or msg_bytes == b'NG\r\n':
-    #             with main_lock:
-    #                 print('status queにappendしたよ')
-    #                 status_que.append(msg_bytes)
-    #         else:
-    #             with main_lock:
-    #                 receive_que.append(msg_bytes)
-    #                 print('メッセージを受信しました')
-    #                 message = receive_que.pop(0)
-    #                 print(message)
+    while True:
+        utime.sleep(1)
+        msg_bytes = uart.readline()
+        # print('checkでのreadは')
+        # print(msg_bytes)
+        if msg_bytes is not None:
+            if msg_bytes == b'OK\r\n' or msg_bytes == b'NG\r\n':
+                with main_lock:
+                    print('status queにappendしたよ')
+                    status_que.append(msg_bytes)
+            else:
+                with main_lock:
+                    receive_que.append(msg_bytes)
+                    print('メッセージを受信しました')
+                    message = receive_que.pop(0)
+                    print(message)
 
-    #                 print(agent_name)
-    #                 if agent_name == 'Sample2':
-    #                     print('agent nameはSample2')
+                    print(agent_name)
+                    if agent_name == 'Sample2':
+                        print('agent nameはSample2')
 
 
 if __name__ == '__main__':
@@ -474,13 +446,19 @@ if __name__ == '__main__':
     with open('Sample2.dash', encoding='utf-8') as f:
         data = f.readline()
         # regex = re.split('\(agent ', data)[1]
-    agent_name = ''
+    agent_name = 'Sample2'
     print('agent_name')
     print(agent_name)
     utime.sleep(1)
 
     receive_que = []
     status_que = []
+
+    lpwa_send_buf = ''
+    LPWA_PACKET_MAX = 32
+    system_dic = ['agent', 'property', 'create', 'initial_facts', 'knowledge',
+                  'Msg', ':performative', ':from', ':to', ':content', '-->',
+                  'make', 'remove', 'modify', 'send', 'move', 'control']
 
     try:
         main_lock = _thread.allocate_lock()
